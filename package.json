@@ -1,0 +1,11 @@
+{
+  "name": "copilot-pec-esus",
+  "version": "1.0.0",
+  "description": "Build script para extensão Wasm",
+  "scripts": {
+    "build": "wasm-pack build --target web --out-dir extension/pkg"
+  },
+  "devDependencies": {
+    "wasm-pack": "^0.13.0"
+  }
+}
