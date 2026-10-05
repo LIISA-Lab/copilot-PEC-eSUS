@@ -109,6 +109,40 @@ function showSidebar(data) {
                 </div>
             </div>
         </div>
+
+        <!-- Card do Profissional (Dados via GraphQL) -->
+        <div style="
+            background-color: white;
+            border: 1px solid #E0E0E0;
+            border-radius: 6px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            margin-top: 16px;
+        ">
+            <h4 style="margin: 0 0 16px 0; color: #333; font-size: 0.95rem; border-bottom: 1px solid #EEE; padding-bottom: 8px;">
+                Profissional Logado
+            </h4>
+            
+            <div style="display: grid; gap: 12px; font-size: 0.9rem; color: #555;">
+                <div>
+                    <strong style="color: #333; display: block; font-size: 0.8rem; text-transform: uppercase; color: #888;">Médico / Profissional</strong>
+                    <span style="font-weight: 500; color: #1351b4;">
+                        ${data.session_info ? data.session_info.professional_name : 'Intercepção Pendente...'}
+                    </span>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div>
+                        <strong style="display: block; font-size: 0.8rem; text-transform: uppercase; color: #888;">CBO</strong>
+                        <span>${data.session_info ? data.session_info.cbo_name : '-'}</span>
+                    </div>
+                    <div>
+                        <strong style="display: block; font-size: 0.8rem; text-transform: uppercase; color: #888;">Unidade</strong>
+                        <span style="font-size: 0.8rem;">${data.session_info ? data.session_info.health_unit_name : '-'}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
   `;
 
@@ -230,6 +264,21 @@ async function runWasmExtractor() {
     console.error("[e-SUS Lens] Erro ao executar extração via Wasm:", error);
   }
 }
+
+// Injecta o rastreador de GraphQL na página original (para burlar isolamento de extensão)
+const script = document.createElement('script');
+script.src = chrome.runtime.getURL('scripts/inject.js');
+script.onload = function() {
+    this.remove();
+};
+(document.head || document.documentElement).appendChild(script);
+
+// Ouve o evento emitido pelo inject.js caso ele consiga pegar os dados
+window.addEventListener('esus_graphql_intercepted', (e) => {
+    console.log("[e-SUS Lens Content] Recebido sinal do interceptor:", e.detail);
+    // Vamos salvar no LocalStorage pra garantir que o Wasm sempre ache, mesmo se a variável global sumir
+    localStorage.setItem('__ESUS_GRAPHQL_DATA__', JSON.stringify(e.detail));
+});
 
 // Listener para abrir a sidebar quando o ícone da extensão é clicado
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

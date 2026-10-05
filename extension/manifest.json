@@ -6,10 +6,12 @@
   "permissions": [
     "activeTab",
     "scripting",
-    "notifications"
+    "notifications",
+    "declarativeNetRequest"
   ],
   "host_permissions": [
-    "*://esustreinamento.saude.ce.gov.br/*"
+    "*://esustreinamento.saude.ce.gov.br/*",
+    "<all_urls>"
   ],
   "background": {
     "service_worker": "scripts/background.js"
@@ -29,7 +31,8 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "pkg/*"
+        "pkg/*",
+        "scripts/inject.js"
       ],
       "matches": ["*://esustreinamento.saude.ce.gov.br/*"]
     }
