@@ -1,4 +1,4 @@
-use crate::domain::patient::Patient;
+use crate::domain::patient::{Patient, SessionInfo};
 use crate::services::traits::PatientDataExtractor;
 use web_sys::{window, Document};
 
@@ -20,6 +20,23 @@ impl DomPatientExtractor {
         }
         None
     }
+
+    /// Pega os dados do GraphQL (Sessão do médico) que foram interceptados e salvos no window
+    fn get_graphql_session_data(&self) -> Option<SessionInfo> {
+        let window = window()?;
+        let storage = window.local_storage().ok()??;
+
+        let intercepted_str = storage.get_item("__ESUS_GRAPHQL_DATA__").ok()??;
+
+        // Tenta desserializar o JSON string para nossa Struct SessionInfo
+        match serde_json::from_str::<SessionInfo>(&intercepted_str) {
+            Ok(session) => Some(session),
+            Err(e) => {
+                web_sys::console::log_1(&format!("Erro ao deserializar sessão: {}", e).into());
+                None
+            }
+        }
+    }
 }
 
 impl PatientDataExtractor for DomPatientExtractor {
@@ -38,6 +55,9 @@ impl PatientDataExtractor for DomPatientExtractor {
         let mother_name = Self::get_text_by_selector(&document, "div.css-14pfv3j");
         let cod_cipa = Self::get_text_by_selector(&document, "div.css-mcsicl");
 
+        // Lê os dados do GraphQL interceptados pela extensão (Nome do Médico, UBS, etc)
+        let session_info = self.get_graphql_session_data();
+
         // Retorna a entidade estruturada.
         Ok(Patient {
             name,
@@ -46,6 +66,7 @@ impl PatientDataExtractor for DomPatientExtractor {
             cpf,
             mother_name,
             cod_cipa,
+            session_info,
         })
     }
 }
