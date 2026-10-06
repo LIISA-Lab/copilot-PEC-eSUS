@@ -1,4 +1,4 @@
-use crate::domain::patient::{Patient, SessionInfo};
+use crate::domain::patient::{GraphqlData, Patient, SessionInfo};
 use crate::services::traits::PatientDataExtractor;
 use web_sys::{window, Document};
 
@@ -21,16 +21,16 @@ impl DomPatientExtractor {
         None
     }
 
-    /// Pega os dados do GraphQL (Sessão do médico) que foram interceptados e salvos no window
-    fn get_graphql_session_data(&self) -> Option<SessionInfo> {
+    /// Pega os dados gerais (Sessão e Paciente) interceptados via GraphQL
+    fn get_graphql_data(&self) -> Option<GraphqlData> {
         let window = window()?;
         let storage = window.local_storage().ok()??;
 
         let intercepted_str = storage.get_item("__ESUS_GRAPHQL_DATA__").ok()??;
 
-        // Tenta desserializar o JSON string para nossa Struct SessionInfo
-        match serde_json::from_str::<SessionInfo>(&intercepted_str) {
-            Ok(session) => Some(session),
+        // Tenta desserializar o JSON string para nossa Struct consolidada
+        match serde_json::from_str::<GraphqlData>(&intercepted_str) {
+            Ok(data) => Some(data),
             Err(e) => {
                 web_sys::console::log_1(&format!("Erro ao deserializar sessão: {}", e).into());
                 None
@@ -47,25 +47,48 @@ impl PatientDataExtractor for DomPatientExtractor {
             .document()
             .ok_or("Erro: Objeto `document` não encontrado na window.")?;
 
-        // Mapeando os seletores CSS fornecidos para a página "Folha de Rosto"
-        let name = Self::get_text_by_selector(&document, "h2.css-k7p917");
-        let sex = Self::get_text_by_selector(&document, "div.css-1favdk2");
-        let age = Self::get_text_by_selector(&document, "div.css-1tipuyb");
-        let cpf = Self::get_text_by_selector(&document, "div.css-122woep");
-        let mother_name = Self::get_text_by_selector(&document, "div.css-14pfv3j");
-        let cod_cipa = Self::get_text_by_selector(&document, "div.css-mcsicl");
+        // Mapeando os seletores CSS (Fallback visual da página "Folha de Rosto")
+        let dom_name = Self::get_text_by_selector(&document, "h2.css-k7p917");
+        let dom_sex = Self::get_text_by_selector(&document, "div.css-1favdk2");
+        let dom_age = Self::get_text_by_selector(&document, "div.css-1tipuyb");
+        let dom_cpf = Self::get_text_by_selector(&document, "div.css-122woep");
+        let dom_mother_name = Self::get_text_by_selector(&document, "div.css-14pfv3j");
+        let dom_cod_cipa = Self::get_text_by_selector(&document, "div.css-mcsicl");
 
-        // Lê os dados do GraphQL interceptados pela extensão (Nome do Médico, UBS, etc)
-        let session_info = self.get_graphql_session_data();
+        // Lê os dados robustos do GraphQL
+        let graphql_data = self.get_graphql_data();
+        let (session_info, gql_patient) = match graphql_data {
+            Some(data) => (data.session_info, data.patient_info),
+            None => (None, None),
+        };
+
+        // Mescla os dados priorizando a API (GraphQL), e caindo pro DOM se a API falhar
+        let name = gql_patient
+            .as_ref()
+            .and_then(|p| p.name.clone())
+            .or(dom_name);
+        let cpf = gql_patient.as_ref().and_then(|p| p.cpf.clone()).or(dom_cpf);
+        let cns = gql_patient.as_ref().and_then(|p| p.cns.clone());
+        let mother_name = gql_patient
+            .as_ref()
+            .and_then(|p| p.mother_name.clone())
+            .or(dom_mother_name);
+        let sex = gql_patient.as_ref().and_then(|p| p.sex.clone()).or(dom_sex);
+        let gender_identity = gql_patient.as_ref().and_then(|p| p.gender_identity.clone());
+        let age = gql_patient.as_ref().and_then(|p| p.age.clone()).or(dom_age);
+        let ultima_dum = gql_patient.as_ref().and_then(|p| p.ultima_dum.clone());
 
         // Retorna a entidade estruturada.
         Ok(Patient {
             name,
             sex,
+            gender_identity,
             age,
             cpf,
+            cns,
             mother_name,
-            cod_cipa,
+            cod_cipa: dom_cod_cipa,
+            ultima_dum,
             session_info,
         })
     }
