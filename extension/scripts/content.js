@@ -72,21 +72,35 @@ function showSidebar(data) {
             <h4 style="margin: 0 0 16px 0; color: #333; font-size: 0.95rem; border-bottom: 1px solid #EEE; padding-bottom: 8px;">
                 Identificação
             </h4>
-
+            
             <div style="display: grid; gap: 12px; font-size: 0.9rem; color: #555;">
                 <div>
                     <strong style="color: #333; display: block; font-size: 0.8rem; text-transform: uppercase; color: #888;">Nome Completo</strong>
                     <span style="font-weight: 500; color: #222;">${data.name || 'Não informado'}</span>
                 </div>
-
+                
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div>
-                        <strong style="display: block; font-size: 0.8rem; text-transform: uppercase; color: #888;">Idade</strong>
+                        <strong style="display: block; font-size: 0.8rem; text-transform: uppercase; color: #888;">Idade / Nasc.</strong>
                         <span>${data.age || 'Não inf.'}</span>
                     </div>
                     <div>
+                        <strong style="display: block; font-size: 0.8rem; text-transform: uppercase; color: #888;">Sexo / Gênero</strong>
+                        <span>
+                            ${data.sex ? data.sex.charAt(0).toUpperCase() + data.sex.slice(1).toLowerCase() : 'Não inf.'}
+                            ${data.gender_identity ? `<br><small style="color:#777;">(${data.gender_identity.replace('_', ' ')})</small>` : ''}
+                        </span>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div>
                         <strong style="display: block; font-size: 0.8rem; text-transform: uppercase; color: #888;">CPF</strong>
                         <span>${data.cpf || 'Não inf.'}</span>
+                    </div>
+                    <div>
+                        <strong style="display: block; font-size: 0.8rem; text-transform: uppercase; color: #888;">CNS</strong>
+                        <span>${data.cns || 'Não inf.'}</span>
                     </div>
                 </div>
 
@@ -97,17 +111,25 @@ function showSidebar(data) {
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div>
+                        <strong style="display: block; font-size: 0.8rem; text-transform: uppercase; color: #888;">Última DUM</strong>
+                        <span style="font-weight: 500; color: #D84315;">
+                            ${data.ultima_dum || 'Sem Registro'}
+                        </span>
+                    </div>
+                    <div>
                         <strong style="display: block; font-size: 0.8rem; text-transform: uppercase; color: #888;">CIPA</strong>
                         <span style="background-color: #E3F2FD; color: #1565C0; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem;">
                             ${data.cod_cipa || '-'}
                         </span>
                     </div>
-                    <div>
-                        <strong style="display: block; font-size: 0.8rem; text-transform: uppercase; color: #888;">Status de Risco</strong>
-                        <span style="color: #9E9E9E; font-style: italic; font-size: 0.85rem;">Aguardando cálculo...</span>
-                    </div>
+                </div>
+                
+                <div>
+                    <strong style="display: block; font-size: 0.8rem; text-transform: uppercase; color: #888;">Status de Risco</strong>
+                    <span style="color: #9E9E9E; font-style: italic; font-size: 0.85rem;">Aguardando cálculo clínico...</span>
                 </div>
             </div>
+        </div>
         </div>
 
         <!-- Card do Profissional (Dados via GraphQL) -->
