@@ -37,10 +37,9 @@
                 isUpdated = true;
             }
 
-            // 2. Intercepta Dados do Paciente (Cidadão) - Busca recursiva flexível
+            // 2. Intercepta Dados do Paciente (Cidadão)
             const findCidadao = (obj) => {
                 if (!obj || typeof obj !== 'object') return null;
-                // Procura um objeto que tenha um cidadao.cpf ou cidadao.cns
                 if (obj.cidadao && (obj.cidadao.cpf || obj.cidadao.cns || obj.cidadao.dataNascimento)) return obj.cidadao;
                 for (const key of Object.keys(obj)) {
                     const found = findCidadao(obj[key]);
@@ -51,20 +50,20 @@
 
             const cidadao = findCidadao(item.data);
             
-            // Tratamento especial para extrair DUM, mesmo se não estiver grudada direto no 'cidadao'
-            const findDum = (obj) => {
-                 if (!obj || typeof obj !== 'object') return null;
-                 if (obj.ultimaDum && obj.ultimaDum.dum) return obj.ultimaDum.dum;
-                 for (const key of Object.keys(obj)) {
-                     const found = findDum(obj[key]);
-                     if (found) return found;
-                 }
-                 return null;
+            // 3. Intercepta Período Gestacional para extrair DUM e Idade Gestacional
+            const findPeriodoGestacional = (obj) => {
+                if (!obj || typeof obj !== 'object') return null;
+                if (obj.periodoGestacional && obj.periodoGestacional.dataInicioGestacao) return obj.periodoGestacional;
+                for (const key of Object.keys(obj)) {
+                    const found = findPeriodoGestacional(obj[key]);
+                    if (found) return found;
+                }
+                return null;
             };
 
-            const dumData = findDum(item.data);
+            const periodoGestacional = findPeriodoGestacional(item.data);
 
-            if (cidadao || dumData) {
+            if (cidadao || periodoGestacional) {
                 if (!window.__ESUS_GRAPHQL_DATA__.patient_info) {
                     window.__ESUS_GRAPHQL_DATA__.patient_info = {};
                 }
@@ -75,7 +74,6 @@
                     p.name = cidadao.nome || p.name || null;
                     p.cpf = cidadao.cpf || p.cpf || null;
                     p.cns = cidadao.cns || p.cns || null;
-                    // Converte data "YYYY-MM-DD" para formato legível no Brasil
                     if (cidadao.dataNascimento) {
                         p.age = cidadao.dataNascimento.split('-').reverse().join('/');
                     }
@@ -84,8 +82,15 @@
                     p.mother_name = cidadao.nomeMae || p.mother_name || null;
                 }
 
-                if (dumData) {
-                    p.ultima_dum = dumData.split('-').reverse().join('/');
+                if (periodoGestacional) {
+                    // Pega DUM do dataInicioGestacao
+                    if (periodoGestacional.dataInicioGestacao) {
+                        p.ultima_dum = periodoGestacional.dataInicioGestacao.split('-').reverse().join('/');
+                    }
+                    // Pega a Idade Gestacional
+                    if (periodoGestacional.idadeGestacionalCronologicaEmDias !== undefined) {
+                        p.idade_gestacional_dias = periodoGestacional.idadeGestacionalCronologicaEmDias;
+                    }
                 }
 
                 isUpdated = true;

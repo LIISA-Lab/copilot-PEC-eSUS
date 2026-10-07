@@ -117,16 +117,24 @@ function showSidebar(data) {
                         </span>
                     </div>
                     <div>
+                        <strong style="display: block; font-size: 0.8rem; text-transform: uppercase; color: #888;">Idade Gestacional</strong>
+                        <span style="font-weight: 500; color: #1565C0;">
+                            ${data.idade_gestacional_dias ? Math.floor(data.idade_gestacional_dias / 7) + ' sem ' + (data.idade_gestacional_dias % 7) + ' dias' : 'Sem Registro'}
+                        </span>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div>
                         <strong style="display: block; font-size: 0.8rem; text-transform: uppercase; color: #888;">CIPA</strong>
                         <span style="background-color: #E3F2FD; color: #1565C0; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem;">
                             ${data.cod_cipa || '-'}
                         </span>
                     </div>
-                </div>
-                
-                <div>
-                    <strong style="display: block; font-size: 0.8rem; text-transform: uppercase; color: #888;">Status de Risco</strong>
-                    <span style="color: #9E9E9E; font-style: italic; font-size: 0.85rem;">Aguardando cálculo clínico...</span>
+                    <div>
+                        <strong style="display: block; font-size: 0.8rem; text-transform: uppercase; color: #888;">Status de Risco</strong>
+                        <span style="color: #9E9E9E; font-style: italic; font-size: 0.85rem;">Aguardando cálculo...</span>
+                    </div>
                 </div>
             </div>
         </div>
