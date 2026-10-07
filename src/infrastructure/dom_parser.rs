@@ -77,6 +77,7 @@ impl PatientDataExtractor for DomPatientExtractor {
         let gender_identity = gql_patient.as_ref().and_then(|p| p.gender_identity.clone());
         let age = gql_patient.as_ref().and_then(|p| p.age.clone()).or(dom_age);
         let ultima_dum = gql_patient.as_ref().and_then(|p| p.ultima_dum.clone());
+        let idade_gestacional_dias = gql_patient.as_ref().and_then(|p| p.idade_gestacional_dias);
 
         // Retorna a entidade estruturada.
         Ok(Patient {
@@ -89,6 +90,7 @@ impl PatientDataExtractor for DomPatientExtractor {
             mother_name,
             cod_cipa: dom_cod_cipa,
             ultima_dum,
+            idade_gestacional_dias,
             session_info,
         })
     }
