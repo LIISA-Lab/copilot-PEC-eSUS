@@ -4,13 +4,14 @@ use serde::{Deserialize, Serialize};
 pub struct Patient {
     pub name: Option<String>,
     pub sex: Option<String>,
-    pub gender_identity: Option<String>, // Nova chave para identidadeGeneroDbEnum
-    pub age: Option<String>,             // Recebe a idade do DOM ou a Data de Nascimento do GraphQL
+    pub gender_identity: Option<String>,
+    pub age: Option<String>,
     pub cpf: Option<String>,
-    pub cns: Option<String>, // Adicionado do GraphQL
+    pub cns: Option<String>,
     pub mother_name: Option<String>,
     pub cod_cipa: Option<String>,
-    pub ultima_dum: Option<String>, // Data da Última Menstruação
+    pub ultima_dum: Option<String>, // Data Inicio Gestação (DUM)
+    pub idade_gestacional_dias: Option<u32>, // Idade Gestacional em Dias
     pub session_info: Option<SessionInfo>,
 }
 
