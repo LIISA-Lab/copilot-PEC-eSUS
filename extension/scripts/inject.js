@@ -50,7 +50,68 @@
 
             const cidadao = findCidadao(item.data);
             
-            // 3. Intercepta Período Gestacional para extrair DUM e Idade Gestacional
+            // 4. Intercepta Dados Extras (Raça/Cor, Telefone, Social, Saúde)
+            // Esses dados vêm na query CidadaoVisualizacao, aninhados no objeto cidadao.
+            if (cidadao) {
+                if (!window.__ESUS_GRAPHQL_DATA__.patient_info) {
+                    window.__ESUS_GRAPHQL_DATA__.patient_info = {};
+                }
+                const p = window.__ESUS_GRAPHQL_DATA__.patient_info;
+                
+                // UUID interno do Cidadão no e-SUS
+                p.id = cidadao.id || p.id || null;
+                
+                // Telefone e Etnia/Raça
+                p.telefone_celular = cidadao.telefoneCelular || p.telefone_celular || null;
+                p.raca_cor = cidadao.racaCor?.nome || p.raca_cor || null;
+
+                // Informações Sócio-Demográficas
+                if (cidadao.informacoesSociodemograficas || cidadao.escolaridade || cidadao.cbo) {
+                    const infoSocio = cidadao.informacoesSociodemograficas || {};
+                    p.sociodemografico = {
+                        escolaridade: cidadao.escolaridade?.nome || null,
+                        ocupacao: cidadao.cbo?.nome || null,
+                        situacao_mercado_trabalho: infoSocio.situacaoMercadoTrabalho || null,
+                        possui_plano_saude_privado: infoSocio.possuiPlanoSaudePrivado !== undefined ? infoSocio.possuiPlanoSaudePrivado : null,
+                        possui_deficiencia: infoSocio.possuiDeficiencia !== undefined ? infoSocio.possuiDeficiencia : null,
+                    };
+                }
+
+                // Condições de Saúde Autorreferidas (Morbidades Mapeadas)
+                if (cidadao.condicoesSaudeAutorreferidas) {
+                    const cond = cidadao.condicoesSaudeAutorreferidas;
+                    // Para os booleanos, usamos !== null ? cond.valor : null para preservar o false!
+                    p.condicoes_saude = {
+                        gestante: cond.stGestante !== null ? cond.stGestante : null,
+                        maternidade_referencia: cond.maternidadeReferencia || null,
+                        peso_adequado: cond.autodenominacaoPeso || null,
+                        acamado: cond.stAcamado !== null ? cond.stAcamado : null,
+                        domiciliar: cond.stDomiciliar !== null ? cond.stDomiciliar : null,
+                        fumante: cond.stFumante !== null ? cond.stFumante : null,
+                        uso_alcool: cond.stUsoAlcool !== null ? cond.stUsoAlcool : null,
+                        uso_drogas: cond.stUsoOutrasDrogas !== null ? cond.stUsoOutrasDrogas : null,
+                        saude_mental: cond.stProblemaSaudeMental !== null ? cond.stProblemaSaudeMental : null,
+                        hipertensao_arterial: cond.stHipertensaoArterial !== null ? cond.stHipertensaoArterial : null,
+                        diabetes: cond.stDiabetes !== null ? cond.stDiabetes : null,
+                        cancer: cond.stCancer !== null ? cond.stCancer : null,
+                        derrame: cond.stDerrame !== null ? cond.stDerrame : null,
+                        infarto: cond.stInfarto !== null ? cond.stInfarto : null,
+                        hanseniase: cond.stHanseniase !== null ? cond.stHanseniase : null,
+                        tuberculose: cond.stTuberculose !== null ? cond.stTuberculose : null,
+                        doenca_cardiaca: cond.stDoencaCardiaca !== null ? cond.stDoencaCardiaca : null,
+                        detalhes_doenca_cardiaca: cond.doencaCardiaca && cond.doencaCardiaca.length > 0 ? cond.doencaCardiaca : null,
+                        problema_rins: cond.stProblemaRins !== null ? cond.stProblemaRins : null,
+                        detalhes_doenca_rins: cond.doencaRins && cond.doencaRins.length > 0 ? cond.doencaRins : null,
+                        doenca_respiratoria: cond.stDoencaRespiratoria !== null ? cond.stDoencaRespiratoria : null,
+                        detalhes_doenca_respiratoria: cond.doencasRespiratorias && cond.doencasRespiratorias.length > 0 ? cond.doencasRespiratorias : null,
+                        internacao_12_meses: cond.stInternacaoUltimos12Meses !== null ? cond.stInternacaoUltimos12Meses : null,
+                        causa_internacao: cond.causaInternacaoUltimos12Meses || null,
+                        plantas_medicinais: cond.stPlantasMedicinais !== null ? cond.stPlantasMedicinais : null
+                    };
+                }
+
+                isUpdated = true;
+            }
             const findPeriodoGestacional = (obj) => {
                 if (!obj || typeof obj !== 'object') return null;
                 if (obj.periodoGestacional && obj.periodoGestacional.dataInicioGestacao) return obj.periodoGestacional;
