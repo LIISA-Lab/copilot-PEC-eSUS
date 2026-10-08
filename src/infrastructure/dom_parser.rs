@@ -63,6 +63,7 @@ impl PatientDataExtractor for DomPatientExtractor {
         };
 
         // Mescla os dados priorizando a API (GraphQL), e caindo pro DOM se a API falhar
+        let id = gql_patient.as_ref().and_then(|p| p.id.clone());
         let name = gql_patient
             .as_ref()
             .and_then(|p| p.name.clone())
@@ -76,11 +77,37 @@ impl PatientDataExtractor for DomPatientExtractor {
         let sex = gql_patient.as_ref().and_then(|p| p.sex.clone()).or(dom_sex);
         let gender_identity = gql_patient.as_ref().and_then(|p| p.gender_identity.clone());
         let age = gql_patient.as_ref().and_then(|p| p.age.clone()).or(dom_age);
+        let telefone_celular = gql_patient
+            .as_ref()
+            .and_then(|p| p.telefone_celular.clone());
+        let raca_cor = gql_patient.as_ref().and_then(|p| p.raca_cor.clone());
+
         let ultima_dum = gql_patient.as_ref().and_then(|p| p.ultima_dum.clone());
         let idade_gestacional_dias = gql_patient.as_ref().and_then(|p| p.idade_gestacional_dias);
 
+        let condicoes_saude = gql_patient.as_ref().and_then(|p| p.condicoes_saude.clone());
+        let sociodemografico = gql_patient
+            .as_ref()
+            .and_then(|p| p.sociodemografico.clone());
+
+        // O DOM extrai a string inteira da UI do e-SUS, que pode conter poluição (como a data "Início...").
+        // Vamos sanitizar pegando apenas o que vem antes da palavra "Início:"
+        let clean_dom_cipa = dom_cod_cipa.map(|c| {
+            if let Some(idx) = c.find("Início:") {
+                c[..idx].trim().to_string()
+            } else {
+                c
+            }
+        });
+
+        let cod_cipa = gql_patient
+            .as_ref()
+            .and_then(|p| p.cod_cipa.clone())
+            .or(clean_dom_cipa);
+
         // Retorna a entidade estruturada.
         Ok(Patient {
+            id,
             name,
             sex,
             gender_identity,
@@ -88,9 +115,13 @@ impl PatientDataExtractor for DomPatientExtractor {
             cpf,
             cns,
             mother_name,
-            cod_cipa: dom_cod_cipa,
+            telefone_celular,
+            raca_cor,
+            cod_cipa,
             ultima_dum,
             idade_gestacional_dias,
+            condicoes_saude,
+            sociodemografico,
             session_info,
         })
     }
