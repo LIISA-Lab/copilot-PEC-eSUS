@@ -3,6 +3,7 @@ mod infrastructure;
 mod services;
 
 use infrastructure::dom_parser::DomPatientExtractor;
+use infrastructure::storage::idb_repository::IndexedDbPatientRepository;
 use services::patient_service::PatientService;
 use wasm_bindgen::prelude::*;
 
@@ -14,20 +15,27 @@ pub fn main_js() -> Result<(), JsValue> {
     Ok(())
 }
 
-/// Função principal exposta para o Javascript (Content Script)
-/// Retorna os dados do paciente extraídos do DOM do e-SUS serializados como JsValue (JSON).
 #[wasm_bindgen]
-pub fn extract_patient_info() -> Result<JsValue, JsValue> {
-    // 1. Instancia o adaptador de Infraestrutura (Lê o DOM)
-    let extractor = DomPatientExtractor::new();
+pub fn extract_patient_info_promise() -> js_sys::Promise {
+    wasm_bindgen_futures::future_to_promise(async move {
+        // 1. Instancia o adaptador de Infraestrutura do DOM
+        let extractor = DomPatientExtractor::new();
 
-    // 2. Injeta o adaptador no Serviço/Caso de Uso
-    let service = PatientService::new(extractor);
+        // 2. Instancia o Repositório do IndexedDB
+        let repo = IndexedDbPatientRepository::new();
 
-    // 3. Executa a lógica e formata a saída para o ecossistema Web (JS)
-    match service.get_patient_data() {
-        Ok(patient) => serde_wasm_bindgen::to_value(&patient)
-            .map_err(|err| JsValue::from_str(&format!("Erro de serialização: {}", err))),
-        Err(e) => Err(JsValue::from_str(&e)),
-    }
+        // 3. Injeta as dependências no Serviço
+        let service = PatientService::new(extractor, repo);
+
+        // 4. Executa a lógica Assíncrona de Extração e Merge
+        match service.process_and_get_patient().await {
+            Ok(patient) => {
+                let js_val = serde_wasm_bindgen::to_value(&patient).map_err(|err| {
+                    JsValue::from_str(&format!("Erro de serialização final: {}", err))
+                })?;
+                Ok(js_val)
+            }
+            Err(e) => Err(JsValue::from_str(&e)),
+        }
+    })
 }
