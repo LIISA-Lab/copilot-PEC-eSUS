@@ -22,9 +22,13 @@
   "content_scripts": [
     {
       "matches": [
-        "*://esustreinamento.saude.ce.gov.br/*"
+        "*://esustreinamento.saude.ce.gov.br/*",
+        "<all_urls>"
       ],
-      "js": ["scripts/content.js"],
+      "js": [
+        "scripts/idb_helper.js",
+        "scripts/content.js"
+      ],
       "run_at": "document_idle"
     }
   ],
@@ -32,7 +36,8 @@
     {
       "resources": [
         "pkg/*",
-        "scripts/inject.js"
+        "scripts/inject.js",
+        "scripts/idb_helper.js"
       ],
       "matches": ["*://esustreinamento.saude.ce.gov.br/*"]
     }

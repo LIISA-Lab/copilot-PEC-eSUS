@@ -461,18 +461,22 @@ async function runWasmExtractor() {
     const wasm = await import(wasmUrl);
     await wasm.default(chrome.runtime.getURL("pkg/copilot_pec_esus_bg.wasm"));
 
-    // 3. Chama a função em Rust que lê o DOM e devolve o Objeto
-    const patientData = wasm.extract_patient_info();
-    console.log("[e-SUS Lens] Dados extraídos com sucesso pelo Rust:", patientData);
+    // 3. Chama a função em Rust que lê o DOM, Mescla com Banco Local e devolve o Objeto
+    try {
+        const patientData = await wasm.extract_patient_info_promise();
+        console.log("[e-SUS Lens] Dados extraídos e consolidados pelo Rust:", patientData);
 
-    // 4. Injeta a Sidebar Lateral do Painel
-    showSidebar(patientData);
+        // 4. Injeta a Sidebar Lateral do Painel
+        showSidebar(patientData);
 
-    // 5. Envia os dados para o Background Script tentar gerar a notificação do SO
-    chrome.runtime.sendMessage({
-      type: "NOTIFY_PATIENT_DATA",
-      payload: patientData
-    });
+        // 5. Envia os dados para o Background Script tentar gerar a notificação do SO
+        chrome.runtime.sendMessage({
+            type: "NOTIFY_PATIENT_DATA",
+            payload: patientData
+        });
+    } catch (err) {
+        console.error("[e-SUS Lens] O Rust retornou um Erro:", err);
+    }
 
   } catch (error) {
     console.error("[e-SUS Lens] Erro ao executar extração via Wasm:", error);
