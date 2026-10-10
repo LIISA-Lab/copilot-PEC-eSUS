@@ -55,9 +55,12 @@ function showSidebar(data) {
 
     <!-- Header simulando identidade do e-SUS PEC (Azul gov.br) -->
     <div style="background-color: #1351b4; color: white; padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #f8d117;">
-        <h2 style="margin: 0; font-size: 1.1rem; font-weight: 500; display: flex; align-items: center; gap: 8px;">
-            <span>🩺</span> e-SUS Lens: Estratificação
-        </h2>
+        <div style="display: flex; flex-direction: column;">
+            <h2 style="margin: 0; font-size: 1.1rem; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+                <span>🩺</span> e-SUS Lens: Estratificação
+            </h2>
+            <span style="font-size: 0.7rem; color: #b3cde0; margin-top: 4px; font-family: monospace;">v${chrome.runtime.getManifest().version}</span>
+        </div>
         <button id="esus-lens-close" style="background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; padding: 4px;" title="Minimizar">✖</button>
     </div>
 
