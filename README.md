@@ -9,23 +9,10 @@ Extensão de alta performance para Google Chrome desenvolvida em **Rust** compil
 Esta extensão opera diretamente no navegador do profissional de saúde, funcionando como um *Local-First EHR (Prontuário Eletrônico Local)*:
 
 1. **Extração Híbrida (DOM + GraphQL):** O motor lê não apenas a interface visual do e-SUS, mas também intercepta silenciosamente requisições de rede (GraphQL), extraindo dados profundos do Cadastro Individual e da Folha de Rosto sem comprometer a navegação.
-2. **Processamento em Rust (Wasm) + Clean Architecture:** O Wasm centraliza todo o parsing, mesclagem de dados (Merge) e regras de negócios, garantindo tipagem forte, ausência de vazamento de memória e processamento na velocidade nativa do SO.
+2. **Processamento em Rust (Wasm):** O Wasm centraliza todo o parsing, mesclagem de dados (Merge) e regras de negócios, garantindo tipagem forte, ausência de vazamento de memória e processamento na velocidade nativa do SO.
 3. **Persistência Local-First (IndexedDB):** Como os dados do e-SUS trafegam em páginas separadas, a extensão armazena e consolida um histórico cumulativo do paciente diretamente no banco NoSQL do navegador do médico.
 4. **Painel de Bordo Interativo (DevTools-like):** Adiciona uma Sidebar responsiva injetada diretamente na interface do e-SUS PEC, utilizando o padrão visual do `gov.br`, para exibir o consolidado clínico.
 5. **Privacidade por Design:** O processamento ocorre *in-memory* localmente, minimizando o tráfego externo de dados sensíveis e garantindo conformidade com a LGPD.
-
----
-
-## 🏗️ Arquitetura do Sistema
-
-O projeto adota os princípios da **Clean Architecture** (Arquitetura Limpa), dividida nas seguintes camadas:
-
-*   **`domain`:** Modelos de dados aninhados (`Patient`, `CondicoesSaude`, `SocioDemografico`) e lógica de mesclagem (`merge`), isolados de frameworks externos.
-*   **`services`:** Orquestração do caso de uso (Extração -> Banco de Dados Local -> Resposta), definindo as traits (Interfaces) que a infraestrutura deve seguir.
-*   **`infrastructure`:** 
-    *   `dom_parser.rs`: Extratores e sanitizadores baseados em seletores CSS e payloads JSON (GraphQL).
-    *   `storage/`: Adaptadores assíncronos que conectam o Rust ao Chrome `IndexedDB` (`idb_helper.js`).
-*   **`extension`:** A casca em JavaScript (Manifest V3) contendo o interceptador de requisições de rede (`inject.js`) e a renderização da interface visual (`content.js`).
 
 ---
 
