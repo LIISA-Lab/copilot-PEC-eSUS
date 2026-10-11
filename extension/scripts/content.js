@@ -1,6 +1,15 @@
 function showSidebar(data) {
   // Evita duplicar a sidebar caso já exista
-  if (document.getElementById("esus-lens-sidebar")) return;
+  if (document.getElementById("esus-lens-sidebar")) {
+      // Atualizar dados da sidebar aberta futuramente...
+      return;
+  }
+
+  // Tratamento de Elegibilidade (Motor de Regras bloqueou o paciente)
+  if (!data) {
+      alert("e-SUS Lens: Este paciente não possui critérios obstétricos registrados (CIAP/CID ou Cadastro) para iniciar a estratificação de risco.");
+      return;
+  }
 
   const sidebar = document.createElement("div");
   sidebar.id = "esus-lens-sidebar";
