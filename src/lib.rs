@@ -15,6 +15,8 @@ pub fn main_js() -> Result<(), JsValue> {
     Ok(())
 }
 
+/// Função principal exposta para o Javascript (Content Script)
+/// Retorna os dados do paciente extraídos e consolidados com o IndexedDB.
 #[wasm_bindgen]
 pub fn extract_patient_info_promise() -> js_sys::Promise {
     wasm_bindgen_futures::future_to_promise(async move {
@@ -27,14 +29,17 @@ pub fn extract_patient_info_promise() -> js_sys::Promise {
         // 3. Injeta as dependências no Serviço
         let service = PatientService::new(extractor, repo);
 
-        // 4. Executa a lógica Assíncrona de Extração e Merge
+        // 4. Executa a lógica Assíncrona de Extração, Validação e Merge
         match service.process_and_get_patient().await {
-            Ok(patient) => {
-                let js_val = serde_wasm_bindgen::to_value(&patient).map_err(|err| {
-                    JsValue::from_str(&format!("Erro de serialização final: {}", err))
-                })?;
+            Ok(Some(patient)) => {
+                let js_val = serde_wasm_bindgen::to_value(&patient)
+                    .map_err(|err| JsValue::from_str(&format!("Erro de serialização final: {}", err)))?;
                 Ok(js_val)
-            }
+            },
+            Ok(None) => {
+                // Retorna explícito para o JS saber que o paciente foi reprovado nas regras de Gestação
+                Ok(JsValue::NULL)
+            },
             Err(e) => Err(JsValue::from_str(&e)),
         }
     })
