@@ -374,58 +374,63 @@ function showSidebar(data) {
       });
   });
 
-  // Lógica para empurrar o conteúdo do e-SUS para o lado (igual o DevTools Docked)
-  // Como o e-SUS usa body e frameworks variados, aplicar um padding-right na tag principal é seguro
-  document.body.style.transition = "padding-right 0.3s ease-in-out";
-  document.body.style.paddingRight = "400px";
+    // Lógica para empurrar o conteúdo do e-SUS para o lado
+    // Lógica para empurrar o conteúdo do e-SUS para o lado
+    document.body.style.transition = "padding-right 0.3s ease-in-out";
+    document.body.style.paddingRight = "400px";
+  
+    // Marca como aberta no sistema de controle
+    isSidebarOpen = true;
 
-  // Botão fechar (Minimizar)
-  document.getElementById("esus-lens-close").addEventListener("click", () => {
-    sidebar.style.transform = "translateX(400px)";
-    document.body.style.paddingRight = "0";
-
-    // Adiciona um botão flutuante para reabrir (Miniatura)
-    showReopenButton(sidebar);
-  });
-}
-
-function showReopenButton(sidebarRef) {
-    if (document.getElementById("esus-lens-reopen")) {
-        document.getElementById("esus-lens-reopen").style.display = "flex";
-        return;
-    }
-
-    const btn = document.createElement("button");
-    btn.id = "esus-lens-reopen";
-    btn.innerHTML = "🩺 e-SUS Lens";
-    btn.title = "Abrir Painel de Estratificação";
-
-    // Estilo flutuante no canto da tela
-    btn.style.position = "fixed";
-    btn.style.bottom = "24px";
-    btn.style.right = "24px";
-    btn.style.backgroundColor = "#1351b4";
-    btn.style.color = "white";
-    btn.style.border = "none";
-    btn.style.borderRadius = "24px";
-    btn.style.padding = "10px 20px";
-    btn.style.fontSize = "0.9rem";
-    btn.style.fontWeight = "bold";
-    btn.style.boxShadow = "0 4px 6px rgba(0,0,0,0.2)";
-    btn.style.cursor = "pointer";
-    btn.style.zIndex = "999999";
-    btn.style.display = "flex";
-    btn.style.alignItems = "center";
-    btn.style.gap = "8px";
-
-    btn.addEventListener("click", () => {
-        sidebarRef.style.transform = "translateX(0)";
-        document.body.style.paddingRight = "400px";
-        btn.style.display = "none";
+    // Botão fechar (Minimizar)
+    document.getElementById("esus-lens-close").addEventListener("click", () => {
+      sidebar.style.transform = "translateX(400px)";
+      document.body.style.paddingRight = "0";
+      isSidebarOpen = false; // Libera para abrir sozinho de novo se navegar pra outra gestante
+    
+      // Adiciona um botão flutuante para reabrir (Miniatura)
+      showReopenButton(sidebar);
     });
+  }
 
-    document.body.appendChild(btn);
-}
+  function showReopenButton(sidebarRef) {
+      if (document.getElementById("esus-lens-reopen")) {
+          document.getElementById("esus-lens-reopen").style.display = "flex";
+          return;
+      }
+
+      const btn = document.createElement("button");
+      btn.id = "esus-lens-reopen";
+      btn.innerHTML = "🩺 e-SUS Lens";
+      btn.title = "Abrir Painel de Estratificação";
+    
+      // Estilo flutuante no canto da tela
+      btn.style.position = "fixed";
+      btn.style.bottom = "24px";
+      btn.style.right = "24px";
+      btn.style.backgroundColor = "#1351b4";
+      btn.style.color = "white";
+      btn.style.border = "none";
+      btn.style.borderRadius = "24px";
+      btn.style.padding = "10px 20px";
+      btn.style.fontSize = "0.9rem";
+      btn.style.fontWeight = "bold";
+      btn.style.boxShadow = "0 4px 6px rgba(0,0,0,0.2)";
+      btn.style.cursor = "pointer";
+      btn.style.zIndex = "999999";
+      btn.style.display = "flex";
+      btn.style.alignItems = "center";
+      btn.style.gap = "8px";
+
+      btn.addEventListener("click", () => {
+          sidebarRef.style.transform = "translateX(0)";
+          document.body.style.paddingRight = "400px";
+          btn.style.display = "none";
+          isSidebarOpen = true; // Atualiza a flag
+      });
+
+      document.body.appendChild(btn);
+  }
 
 function waitForPatientNameElement() {
   return new Promise((resolve) => {
@@ -462,11 +467,12 @@ function waitForPatientNameElement() {
   });
 }
 
-async function runWasmExtractor() {
+async function runWasmExtractor(isSilent = false) {
   try {
     // 1. Espera a UI do paciente carregar
     await waitForPatientNameElement();
-    console.log("[e-SUS Lens] UI detectada. Carregando módulo Wasm...");
+    
+    if (!isSilent) console.log("[e-SUS Lens] UI detectada. Carregando módulo Wasm...");
 
     // 2. Importa e inicializa o WebAssembly compilado
     const wasmUrl = chrome.runtime.getURL("pkg/copilot_pec_esus.js");
@@ -476,6 +482,16 @@ async function runWasmExtractor() {
     // 3. Chama a função em Rust que lê o DOM, Mescla com Banco Local e devolve o Objeto
     try {
         const patientData = await wasm.extract_patient_info_promise();
+        
+        // Se patientData for NULL, significa que o Motor de Regras (Rust) barrou o paciente
+        if (!patientData) {
+            if (!isSilent) {
+                // Se o usuário CLICOU ativamente na extensão, avisamos o bloqueio.
+                alert("e-SUS Lens: Este paciente não possui critérios obstétricos registrados (CIAP/CID ou Cadastro) para iniciar a estratificação de risco.");
+            }
+            return; // Aborta e a Sidebar continua escondida.
+        }
+        
         console.log("[e-SUS Lens] Dados extraídos e consolidados pelo Rust:", patientData);
 
         // 4. Injeta a Sidebar Lateral do Painel
@@ -503,30 +519,40 @@ script.onload = function() {
 };
 (document.head || document.documentElement).appendChild(script);
 
+// Flag de controle para evitar aberturas simultâneas/repetitivas enquanto o médico navega
+let isSidebarOpen = false;
+
 // Ouve o evento emitido pelo inject.js caso ele consiga pegar os dados
 window.addEventListener('esus_graphql_intercepted', (e) => {
     console.log("[e-SUS Lens Content] Recebido sinal do interceptor:", e.detail);
-    // Vamos salvar no LocalStorage pra garantir que o Wasm sempre ache, mesmo se a variável global sumir
     localStorage.setItem('__ESUS_GRAPHQL_DATA__', JSON.stringify(e.detail));
+
+    // A MÁGICA ZERO-CLICK (Auto-Discovery)
+    if (!isSidebarOpen) {
+        console.log("[e-SUS Lens Content] Acionando Wasm silenciosamente para verificar elegibilidade...");
+        runWasmExtractor(true); // O parâmetro 'true' indica que é uma execução silenciosa
+    }
 });
 
-// Listener para abrir a sidebar quando o ícone da extensão é clicado
+// Listener para abrir a sidebar MANUALMENTE quando o ícone da extensão é clicado
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "TOGGLE_SIDEBAR") {
     const sidebar = document.getElementById("esus-lens-sidebar");
     
-    // Se a sidebar já existe, só controlamos a visibilidade (abre/fecha)
+    // Se a sidebar já existe, controlamos a visibilidade (abre/fecha)
     if (sidebar) {
       if (sidebar.style.transform === "translateX(400px)") {
         sidebar.style.transform = "translateX(0)";
         document.body.style.paddingRight = "400px";
+        isSidebarOpen = true;
       } else {
         sidebar.style.transform = "translateX(400px)";
         document.body.style.paddingRight = "0";
+        isSidebarOpen = false;
       }
     } else {
-      // Se a sidebar não existe, chama o fluxo do Wasm para extrair e criá-la
-      runWasmExtractor();
+      // Execução ativa/forçada (não silenciosa)
+      runWasmExtractor(false);
     }
   }
 });
