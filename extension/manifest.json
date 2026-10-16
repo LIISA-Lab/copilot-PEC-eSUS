@@ -16,9 +16,19 @@
   "background": {
     "service_worker": "scripts/background.js"
   },
-  "action": {
-    "default_title": "Abrir Painel e-SUS Lens"
-  },
+"icons": {
+  "16": "icons/logo-e-sus.png",
+  "32": "icons/logo-e-sus.png",
+  "48": "icons/logo-e-sus.png",
+  "128": "icons/logo-e-sus.png"
+},
+"action": {
+  "default_title": "Abrir Painel e-SUS Lens",
+  "default_icon": {
+    "16": "icons/logo-e-sus.png",
+    "32": "icons/logo-e-sus.png"
+  }
+},
   "content_scripts": [
     {
       "matches": [
