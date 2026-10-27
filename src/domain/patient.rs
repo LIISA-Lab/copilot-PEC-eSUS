@@ -91,6 +91,64 @@ impl SocioDemografico {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct EnderecoReferencia {
+    pub id: Option<String>,
+    pub nome: Option<String>,
+}
+
+impl EnderecoReferencia {
+    fn merge(self, old: Self) -> Self {
+        Self {
+            id: self.id.or(old.id),
+            nome: self.nome.or(old.nome),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct Endereco {
+    pub cep: Option<String>,
+    pub uf: Option<EnderecoReferencia>,
+    pub municipio: Option<EnderecoReferencia>,
+    pub bairro: Option<String>,
+    pub tipo_logradouro: Option<EnderecoReferencia>,
+    pub logradouro: Option<String>,
+    pub numero: Option<String>,
+    pub sem_numero: Option<bool>,
+    pub complemento: Option<String>,
+    pub ponto_referencia: Option<String>,
+}
+
+impl Endereco {
+    fn merge_referencia(
+        new: Option<EnderecoReferencia>,
+        old: Option<EnderecoReferencia>,
+    ) -> Option<EnderecoReferencia> {
+        match (new, old) {
+            (Some(new), Some(old)) => Some(new.merge(old)),
+            (Some(new), None) => Some(new),
+            (None, Some(old)) => Some(old),
+            (None, None) => None,
+        }
+    }
+
+    pub fn merge(self, old: Self) -> Self {
+        Self {
+            cep: self.cep.or(old.cep),
+            uf: Self::merge_referencia(self.uf, old.uf),
+            municipio: Self::merge_referencia(self.municipio, old.municipio),
+            bairro: self.bairro.or(old.bairro),
+            tipo_logradouro: Self::merge_referencia(self.tipo_logradouro, old.tipo_logradouro),
+            logradouro: self.logradouro.or(old.logradouro),
+            numero: self.numero.or(old.numero),
+            sem_numero: self.sem_numero.or(old.sem_numero),
+            complemento: self.complemento.or(old.complemento),
+            ponto_referencia: self.ponto_referencia.or(old.ponto_referencia),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Patient {
     pub id: Option<String>,
     pub name: Option<String>,
@@ -102,6 +160,7 @@ pub struct Patient {
     pub mother_name: Option<String>,
     pub telefone_celular: Option<String>,
     pub raca_cor: Option<String>,
+    pub endereco: Option<Endereco>,
 
     // Dados Clínicos
     pub cod_cipa: Option<String>,
@@ -131,6 +190,12 @@ impl Patient {
             mother_name: self.mother_name.or(old.mother_name),
             telefone_celular: self.telefone_celular.or(old.telefone_celular),
             raca_cor: self.raca_cor.or(old.raca_cor),
+            endereco: match (self.endereco, old.endereco) {
+                (Some(new), Some(old)) => Some(new.merge(old)),
+                (Some(new), None) => Some(new),
+                (None, Some(old)) => Some(old),
+                (None, None) => None,
+            },
             cod_cipa: self.cod_cipa.or(old.cod_cipa),
             ultima_dum: self.ultima_dum.or(old.ultima_dum),
             idade_gestacional_dias: self.idade_gestacional_dias.or(old.idade_gestacional_dias),

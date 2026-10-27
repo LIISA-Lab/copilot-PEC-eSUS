@@ -77,6 +77,23 @@
                     };
                 }
 
+                // Endereço Residencial (Query BuscaDetailCidadao ou similar)
+                if (cidadao.endereco) {
+                    const end = cidadao.endereco;
+                    p.endereco = {
+                        cep: end.cep || null,
+                        uf: end.uf ? { id: end.uf.id ? String(end.uf.id) : null, nome: end.uf.nome || null } : null,
+                        municipio: end.municipio ? { id: end.municipio.id ? String(end.municipio.id) : null, nome: end.municipio.nome || null } : null,
+                        bairro: end.bairro || null,
+                        tipo_logradouro: end.tipoLogradouro ? { id: end.tipoLogradouro.id ? String(end.tipoLogradouro.id) : null, nome: end.tipoLogradouro.nome || null } : null,
+                        logradouro: end.logradouro || null,
+                        numero: end.numero || null,
+                        sem_numero: end.semNumero !== undefined ? end.semNumero : null,
+                        complemento: end.complemento || null,
+                        ponto_referencia: end.pontoReferencia || null,
+                    };
+                }
+
                 // Condições de Saúde Autorreferidas (Morbidades Mapeadas)
                 if (cidadao.condicoesSaudeAutorreferidas) {
                     const cond = cidadao.condicoesSaudeAutorreferidas;

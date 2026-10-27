@@ -41,6 +41,7 @@ function showSidebar(data) {
 
   const sd = data.sociodemografico || {};
   const cs = data.condicoes_saude || {};
+  const end = data.endereco || {};
 
   sidebar.innerHTML = `
     <style>
@@ -190,6 +191,41 @@ function showSidebar(data) {
                 <div>
                     <strong class="data-label">Nome da Mãe</strong>
                     ${formatVal(data.mother_name)}
+                </div>
+            </div>
+        </details>
+
+        <details class="esus-accordion" open>
+            <summary>Endereço Residencial</summary>
+            <div class="acc-content">
+                <div style="margin-bottom: 12px;">
+                    <strong class="data-label">Logradouro</strong>
+                    ${formatVal([end.tipo_logradouro?.nome, end.logradouro].filter(Boolean).join(' ') || end.logradouro)}
+                    ${end.numero ? `, nº ${end.numero}` : (end.sem_numero ? ', S/N' : '')}
+                </div>
+                <div class="grid-2">
+                    <div>
+                        <strong class="data-label">Bairro</strong>
+                        ${formatVal(end.bairro)}
+                    </div>
+                    <div>
+                        <strong class="data-label">CEP</strong>
+                        ${formatVal(end.cep)}
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div>
+                        <strong class="data-label">Município / UF</strong>
+                        ${formatVal([end.municipio?.nome, end.uf?.nome].filter(Boolean).join(' / '))}
+                    </div>
+                    <div>
+                        <strong class="data-label">Complemento</strong>
+                        ${formatVal(end.complemento)}
+                    </div>
+                </div>
+                <div>
+                    <strong class="data-label">Ponto de Referência</strong>
+                    ${formatVal(end.ponto_referencia)}
                 </div>
             </div>
         </details>

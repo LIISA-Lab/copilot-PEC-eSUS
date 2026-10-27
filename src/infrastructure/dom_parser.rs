@@ -81,6 +81,7 @@ impl PatientDataExtractor for DomPatientExtractor {
             .as_ref()
             .and_then(|p| p.telefone_celular.clone());
         let raca_cor = gql_patient.as_ref().and_then(|p| p.raca_cor.clone());
+        let endereco = gql_patient.as_ref().and_then(|p| p.endereco.clone());
 
         let ultima_dum = gql_patient.as_ref().and_then(|p| p.ultima_dum.clone());
         let idade_gestacional_dias = gql_patient.as_ref().and_then(|p| p.idade_gestacional_dias);
@@ -117,6 +118,7 @@ impl PatientDataExtractor for DomPatientExtractor {
             mother_name,
             telefone_celular,
             raca_cor,
+            endereco,
             cod_cipa,
             ultima_dum,
             idade_gestacional_dias,
