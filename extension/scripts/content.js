@@ -45,7 +45,7 @@ function showSidebar(data) {
 
   sidebar.innerHTML = `
     <style>
-        .esus-tab { flex: 1; padding: 12px 0; border: none; background: none; cursor: pointer; font-weight: 500; color: #666; border-bottom: 3px solid transparent; transition: all 0.2s; }
+        .esus-tab { flex: 1; padding: 12px 0; border: none; background: none; cursor: pointer; font-weight: 500; font-size: 0.8rem; color: #666; border-bottom: 3px solid transparent; transition: all 0.2s; }
         .esus-tab:hover { background-color: #f1f1f1; }
         .esus-tab.active { color: #1351b4; border-bottom: 3px solid #1351b4; background-color: #F8F9FA;}
         .esus-tab-content { display: none; padding: 16px; background-color: #F8F9FA; height: calc(100vh - 110px); overflow-y: auto;}
@@ -79,6 +79,7 @@ function showSidebar(data) {
         <button class="esus-tab active" data-tab="tab-geral">Visão Geral</button>
         <button class="esus-tab" data-tab="tab-socio">Sócio-Dem.</button>
         <button class="esus-tab" data-tab="tab-saude">Clínico</button>
+        <button class="esus-tab" data-tab="tab-acesso-saude">Acesso Saúde CE</button>
     </div>
 
     <!-- ABA 1: VISÃO GERAL -->
@@ -168,6 +169,28 @@ function showSidebar(data) {
                         <strong class="data-label">Unidade (UBS)</strong>
                         <span style="font-size: 0.8rem;">${data.session_info?.health_unit_name || 'Não inf.'}</span>
                     </div>
+                </div>
+                <div class="grid-2">
+                    <div>
+                        <strong class="data-label">CNES</strong>
+                        ${formatVal(data.session_info?.health_unit_cnes)}
+                    </div>
+                    <div>
+                        <strong class="data-label">Município</strong>
+                        ${formatVal(data.session_info?.municipio_nome)}
+                    </div>
+                </div>
+                <div>
+                    <strong class="data-label">Conselho de Classe</strong>
+                    ${formatVal(
+                        data.session_info?.conselho_classe_sigla || data.session_info?.numero_conselho_classe
+                            ? [
+                                data.session_info?.conselho_classe_sigla,
+                                data.session_info?.numero_conselho_classe,
+                              ].filter(Boolean).join(' ') +
+                              (data.session_info?.uf_conselho_classe_sigla ? `/${data.session_info.uf_conselho_classe_sigla}` : '')
+                            : null
+                    )}
                 </div>
             </div>
         </details>
@@ -389,9 +412,18 @@ function showSidebar(data) {
             </div>
         </details>
     </div>
+
+    <!-- ABA 4: ACESSO SAÚDE CE (Teleconsultoria) -->
+    <div id="tab-acesso-saude" class="esus-tab-content">
+        ${AcessoSaude.tabHtml()}
+    </div>
   `;
 
   document.body.appendChild(sidebar);
+
+  // Aba Acesso Saúde CE: paciente atual + carregamento das especialidades
+  AcessoSaude.setPatient(data);
+  AcessoSaude.init(sidebar);
 
   // Lógica das Abas (Tabs)
   const tabButtons = sidebar.querySelectorAll('.esus-tab');
@@ -529,6 +561,9 @@ async function runWasmExtractor(isSilent = false) {
         }
         
         console.log("[e-SUS Lens] Dados extraídos e consolidados pelo Rust:", patientData);
+
+        // Mantém a aba Acesso Saúde CE com o paciente mais recente (mesmo com a sidebar já aberta)
+        AcessoSaude.setPatient(patientData);
 
         // 4. Injeta a Sidebar Lateral do Painel
         showSidebar(patientData);

@@ -28,11 +28,41 @@
             // 1. Intercepta Dados da Sessão do Médico
             if (item.data.sessao) {
                 const sessao = item.data.sessao;
+                const prof = sessao.profissional || {};
+                const acesso = sessao.acesso || {};
+
+                // Busca em largura (BFS) por uma chave dentro de `sessao`: prioriza o
+                // nível mais raso. Fallback caso o caminho conhecido mude entre versões
+                // do PEC ou perfis de acesso (Lotação, GestorMunicipal, etc.).
+                const findField = (root, key) => {
+                    const queue = [root];
+                    while (queue.length) {
+                        const node = queue.shift();
+                        if (!node || typeof node !== 'object') continue;
+                        if (node[key] !== undefined && node[key] !== null) return node[key];
+                        for (const child of Object.values(node)) {
+                            if (child && typeof child === 'object') queue.push(child);
+                        }
+                    }
+                    return null;
+                };
+                const asStr = (v) => (v === null || v === undefined || v === '' ? null : String(v));
+
+                const municipio = acesso.municipio || findField(sessao, 'municipio');
+                const unidadeSaude = acesso.unidadeSaude || findField(sessao, 'unidadeSaude');
+                const conselhoClasse = prof.conselhoClasse || findField(sessao, 'conselhoClasse');
+                const ufConselho = prof.ufEmissoraConselhoClasse || findField(sessao, 'ufEmissoraConselhoClasse');
+
                 window.__ESUS_GRAPHQL_DATA__.session_info = {
-                    professional_name: sessao.profissional?.nome || null,
-                    professional_cpf: sessao.profissional?.cpf || null,
-                    cbo_name: sessao.acesso?.cbo?.nome || null,
-                    health_unit_name: sessao.acesso?.unidadeSaude?.nome || null
+                    professional_name: prof.nome || null,
+                    professional_cpf: prof.cpf || null,
+                    cbo_name: acesso.cbo?.nome || null,
+                    health_unit_name: unidadeSaude?.nome || null,
+                    health_unit_cnes: asStr(unidadeSaude?.cnes),
+                    municipio_nome: asStr(municipio?.nome),
+                    conselho_classe_sigla: asStr(conselhoClasse?.sigla),
+                    numero_conselho_classe: asStr(prof.numeroConselhoClasse ?? findField(sessao, 'numeroConselhoClasse')),
+                    uf_conselho_classe_sigla: asStr(ufConselho?.sigla)
                 };
                 isUpdated = true;
             }

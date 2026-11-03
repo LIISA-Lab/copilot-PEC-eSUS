@@ -26,3 +26,7 @@ target
 /target
 /pkg
 /implementations
+
+# Segredos (API key do Acesso Saúde CE)
+.env
+extension/scripts/config.js

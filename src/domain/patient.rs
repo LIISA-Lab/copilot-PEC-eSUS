@@ -224,6 +224,11 @@ pub struct SessionInfo {
     pub professional_cpf: Option<String>,
     pub cbo_name: Option<String>,
     pub health_unit_name: Option<String>,
+    pub health_unit_cnes: Option<String>,        // acesso.unidadeSaude.cnes
+    pub municipio_nome: Option<String>,          // municipio.nome
+    pub conselho_classe_sigla: Option<String>,   // conselhoClasse.sigla (ex: CRM, COREN)
+    pub numero_conselho_classe: Option<String>,  // numeroConselhoClasse
+    pub uf_conselho_classe_sigla: Option<String>, // ufEmissoraConselhoClasse.sigla
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
