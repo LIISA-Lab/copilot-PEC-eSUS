@@ -10,25 +10,31 @@ const AcessoSaude = (() => {
   // Fallback usado quando GET /especialidades/ falha (o endpoint exige OAuth2 e pode
   // recusar a X-API-Key). Os nomes devem coincidir com os cadastrados na API.
   const ESPECIALIDADES_PADRAO = [
-    "Cardiologia",
-    "Clínica Geral",
     "Dermatologia",
-    "Endocrinologia",
-    "Gastroenterologia",
-    "Geriatria",
-    "Ginecologia e Obstetrícia",
-    "Hematologia",
     "Infectologia",
-    "Nefrologia",
-    "Neurologia",
-    "Oftalmologia",
-    "Ortopedia",
+    "Cirurgia Geral",
+    "Endocrinologia",
+    "Hematologia",
+    "Gastroenterologia",
+    "PEP",
+    "PrEP",
     "Otorrinolaringologia",
+    "Medicina de Família e Comunidade",
+    "Geriatria",
+    "Cirurgia Vascular",
+    "Laudo Cardiologista (ECG)",
+    "Oftalmologia",
+    "Psiquiatria",
+    "Intensivista",
+    "Gineco-Obstetricia",
     "Pediatria",
     "Pneumologia",
-    "Psiquiatria",
+    "Ortopedia",
+    "Nefrologia",
     "Reumatologia",
-    "Urologia",
+    "Mastologia",
+    "Proctologia",
+    "Odontologia - Teleconsultoria"
   ];
 
   // Tradução das mensagens mais comuns de validação do FastAPI/Pydantic
@@ -40,11 +46,11 @@ const AcessoSaude = (() => {
   // emailUsuario agora é informado pelo profissional na aba da UBS.
   const VALORES_TESTE = {
     modalidade: "TELECONSULTA",
-    orgaoExpedidorRegistro: "CRM",
-    numeroRegistro: "12345",
-    uFRegistro: "CE",
-    estabelecimento: "1234567", // CNES
-    municipioUbs: "Fortaleza", // usado se o município do paciente não for identificado
+    // orgaoExpedidorRegistro: "CRM",
+    // numeroRegistro: "12345",
+    // uFRegistro: "CE",
+    // estabelecimento: "1234567", // CNES
+    // municipioUbs: "Fortaleza", // usado se o município do paciente não for identificado
     pergunta: "Teste de integração e-SUS PEC Lens: solicitação de teleconsultoria com especialista.",
   };
 
@@ -194,10 +200,10 @@ const AcessoSaude = (() => {
 
           <div class="acesso-field">
             <label class="acesso-label" for="acesso-email-ubs">E-mail da Unidade Básica de Saúde (UBS)</label>
-            <input 
-              type="email" 
-              id="acesso-email-ubs" 
-              placeholder="ex.: ubs.centro@saude.ce.gov.br" 
+            <input
+              type="email"
+              id="acesso-email-ubs"
+              placeholder="ex.: ubs.centro@saude.ce.gov.br"
               autocomplete="email"
             />
             <div class="acesso-alert-box">
