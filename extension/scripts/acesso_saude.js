@@ -5,6 +5,7 @@
 
 const AcessoSaude = (() => {
   const NOT_FOUND = "not found";
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   // Fallback usado quando GET /especialidades/ falha (o endpoint exige OAuth2 e pode
   // recusar a X-API-Key). Os nomes devem coincidir com os cadastrados na API.
@@ -35,13 +36,10 @@ const AcessoSaude = (() => {
     "Field required": "campo obrigatório ausente",
   };
 
-  // ⚠ VALORES DE TESTE — campos obrigatórios que o e-SUS PEC (struct Patient) não fornece.
-  // Definidos para validar a integração ponta a ponta. Substituir por dados reais do
-  // profissional/estabelecimento (ou por inputs na aba) antes de ir para produção.
+  // ⚠ VALORES DE TESTE — campos que o e-SUS PEC (struct Patient) não fornece.
+  // emailUsuario agora é informado pelo profissional na aba da UBS.
   const VALORES_TESTE = {
     modalidade: "TELECONSULTA",
-    emailUsuario: "isabely.cavalcante@saude.ce.gov.br",
-    // Abaixo: exemplos de simular_teleconsultoria_pec.py
     orgaoExpedidorRegistro: "CRM",
     numeroRegistro: "12345",
     uFRegistro: "CE",
@@ -80,7 +78,7 @@ const AcessoSaude = (() => {
    * Campos obrigatórios não identificados no Patient recebem "not found";
    * campos opcionais não identificados ficam null (não são enviados).
    */
-  function buildTeleconsultoriaPayload(patient, especialidade, interpreteLibras) {
+  function buildTeleconsultoriaPayload(patient, especialidade, interpreteLibras, emailUbs) {
     const p = patient || {};
     const end = p.endereco || {};
     const session = p.session_info || {};
@@ -114,7 +112,7 @@ const AcessoSaude = (() => {
 
       // Profissional solicitante / estabelecimento
       nomeUsuario: required(session.professional_name),
-      emailUsuario: VALORES_TESTE.emailUsuario,
+      emailUsuario: required(emailUbs), // E-mail da Unidade Básica de Saúde
       telefoneUsuario: null,
       orgaoExpedidorRegistro: clean(session.conselho_classe_sigla) || VALORES_TESTE.orgaoExpedidorRegistro,
       nomeOutrosOrgaoExpedidorRegistro: null,
@@ -159,10 +157,11 @@ const AcessoSaude = (() => {
         #tab-acesso-saude .acc-content { overflow: hidden; }
         .acesso-field { margin-bottom: 16px; }
         .acesso-field label.acesso-label { display: block; font-size: 0.75rem; text-transform: uppercase; color: #888; margin-bottom: 6px; font-weight: 600; }
-        #acesso-especialidade { display: block; width: 100%; max-width: 100%; min-width: 0; margin: 0; padding: 10px 12px; border: 1px solid #c4c4c4; border-radius: 4px; font-family: inherit; font-size: 0.9rem; background: #fff; color: #333; }
-        #acesso-especialidade:focus { outline: 2px solid #1351b4; outline-offset: 1px; }
+        #acesso-especialidade, #acesso-email-ubs { display: block; width: 100%; max-width: 100%; min-width: 0; margin: 0; padding: 10px 12px; border: 1px solid #c4c4c4; border-radius: 4px; font-family: inherit; font-size: 0.9rem; background: #fff; color: #333; }
+        #acesso-especialidade:focus, #acesso-email-ubs:focus { outline: 2px solid #1351b4; outline-offset: 1px; }
         .acesso-hint { font-size: 0.75rem; color: #9E9E9E; margin-top: 4px; }
         .acesso-hint.warn { color: #E65100; }
+        .acesso-alert-box { background-color: #FFF3CD; border-left: 3px solid #FFA000; padding: 8px 10px; margin-top: 6px; border-radius: 3px; font-size: 0.75rem; color: #856404; line-height: 1.35; }
         .acesso-check { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; font-size: 0.9rem; color: #333; line-height: 1.35; }
         .acesso-check input { width: 18px; height: 18px; margin: 1px 0 0 0; accent-color: #1351b4; flex-shrink: 0; cursor: pointer; }
         #acesso-solicitar { display: block; width: 100%; max-width: 100%; min-width: 0; height: auto; margin: 0; padding: 10px 16px; border: none; border-radius: 24px; background-color: #d32f2f; color: #ffffff; font-family: inherit; font-size: 0.9rem; font-weight: 600; line-height: 1.3; text-align: center; white-space: normal; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.15); transition: background-color 0.2s, transform 0.1s; }
@@ -191,6 +190,19 @@ const AcessoSaude = (() => {
               <option value="">Carregando especialidades...</option>
             </select>
             <div id="acesso-especialidade-hint" class="acesso-hint"></div>
+          </div>
+
+          <div class="acesso-field">
+            <label class="acesso-label" for="acesso-email-ubs">E-mail da Unidade Básica de Saúde (UBS)</label>
+            <input 
+              type="email" 
+              id="acesso-email-ubs" 
+              placeholder="ex.: ubs.centro@saude.ce.gov.br" 
+              autocomplete="email"
+            />
+            <div class="acesso-alert-box">
+              ⚠️ <strong>Atenção:</strong> O e-mail informado deve ser o da <strong>Unidade Básica de Saúde (UBS)</strong>, e não o e-mail pessoal.
+            </div>
           </div>
 
           <div class="acesso-field">
@@ -280,10 +292,12 @@ const AcessoSaude = (() => {
   }
 
   function currentPayload(root) {
+    const emailInput = root.querySelector("#acesso-email-ubs");
     return buildTeleconsultoriaPayload(
       currentPatient,
       root.querySelector("#acesso-especialidade").value,
-      root.querySelector("#acesso-libras").checked
+      root.querySelector("#acesso-libras").checked,
+      emailInput ? emailInput.value : ""
     );
   }
 
@@ -295,9 +309,23 @@ const AcessoSaude = (() => {
   async function submit(root) {
     const button = root.querySelector("#acesso-solicitar");
     const especialidade = root.querySelector("#acesso-especialidade").value;
+    const emailInput = root.querySelector("#acesso-email-ubs");
+    const emailUbs = emailInput ? emailInput.value.trim() : "";
 
     if (!especialidade) {
       showFeedback(root, "error", "Selecione uma especialidade antes de solicitar.");
+      return;
+    }
+
+    if (!emailUbs) {
+      showFeedback(root, "error", "Por favor, informe o e-mail da Unidade Básica de Saúde (UBS).");
+      emailInput?.focus();
+      return;
+    }
+
+    if (!EMAIL_REGEX.test(emailUbs)) {
+      showFeedback(root, "error", "O e-mail da UBS informado é inválido. Verifique o formato digitado.");
+      emailInput?.focus();
       return;
     }
 
@@ -327,6 +355,7 @@ const AcessoSaude = (() => {
     root.querySelector("#acesso-solicitar").addEventListener("click", () => submit(root));
     root.querySelector("#acesso-especialidade").addEventListener("change", () => refreshPreview(root));
     root.querySelector("#acesso-libras").addEventListener("change", () => refreshPreview(root));
+    root.querySelector("#acesso-email-ubs").addEventListener("input", () => refreshPreview(root));
     root.querySelector("#acesso-payload-details").addEventListener("toggle", () => refreshPreview(root));
     refreshPreview(root);
     loadEspecialidades(root);
