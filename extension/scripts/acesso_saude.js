@@ -551,5 +551,5 @@ const AcessoSaude = (() => {
     }
   }
 
-  return { NOT_FOUND, tabHtml, init, setPatient, buildTeleconsultoriaPayload, describeError };
+  return { NOT_FOUND, tabHtml, init, setPatient, buildTeleconsultoriaPayload, describeError, avaliarCompletude };
 })();
