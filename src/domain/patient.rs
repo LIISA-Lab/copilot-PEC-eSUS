@@ -149,6 +149,25 @@ impl Endereco {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct EvolucaoPreNatal {
+    pub subjetivo: Option<String>,
+    pub objetivo: Option<String>,
+    pub avaliacao: Option<String>,
+    pub problema: Option<String>,
+}
+
+impl EvolucaoPreNatal {
+    pub fn merge(self, old: Self) -> Self {
+        Self {
+            subjetivo: self.subjetivo.or(old.subjetivo),
+            objetivo: self.objetivo.or(old.objetivo),
+            avaliacao: self.avaliacao.or(old.avaliacao),
+            problema: self.problema.or(old.problema),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Patient {
     pub id: Option<String>,
     pub name: Option<String>,
@@ -166,6 +185,7 @@ pub struct Patient {
     pub cod_cipa: Option<String>,
     pub ultima_dum: Option<String>, // Data Inicio Gestação (DUM)
     pub idade_gestacional_dias: Option<u32>, // Idade Gestacional em Dias
+    pub evolucao_pre_natal: Option<EvolucaoPreNatal>,
     pub condicoes_saude: Option<CondicoesSaude>,
 
     // Dados Sociais e Estratificação
@@ -199,6 +219,12 @@ impl Patient {
             cod_cipa: self.cod_cipa.or(old.cod_cipa),
             ultima_dum: self.ultima_dum.or(old.ultima_dum),
             idade_gestacional_dias: self.idade_gestacional_dias.or(old.idade_gestacional_dias),
+            evolucao_pre_natal: match (self.evolucao_pre_natal, old.evolucao_pre_natal) {
+                (Some(new_ev), Some(old_ev)) => Some(new_ev.merge(old_ev)),
+                (Some(new_ev), None) => Some(new_ev),
+                (None, Some(old_ev)) => Some(old_ev),
+                (None, None) => None,
+            },
             session_info: self.session_info.or(old.session_info),
 
             // Tratamento especial pros módulos aninhados
@@ -224,10 +250,10 @@ pub struct SessionInfo {
     pub professional_cpf: Option<String>,
     pub cbo_name: Option<String>,
     pub health_unit_name: Option<String>,
-    pub health_unit_cnes: Option<String>,        // acesso.unidadeSaude.cnes
-    pub municipio_nome: Option<String>,          // municipio.nome
-    pub conselho_classe_sigla: Option<String>,   // conselhoClasse.sigla (ex: CRM, COREN)
-    pub numero_conselho_classe: Option<String>,  // numeroConselhoClasse
+    pub health_unit_cnes: Option<String>, // acesso.unidadeSaude.cnes
+    pub municipio_nome: Option<String>,   // municipio.nome
+    pub conselho_classe_sigla: Option<String>, // conselhoClasse.sigla (ex: CRM, COREN)
+    pub numero_conselho_classe: Option<String>, // numeroConselhoClasse
     pub uf_conselho_classe_sigla: Option<String>, // ufEmissoraConselhoClasse.sigla
 }
 

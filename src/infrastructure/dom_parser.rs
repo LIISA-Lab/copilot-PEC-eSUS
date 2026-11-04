@@ -85,6 +85,9 @@ impl PatientDataExtractor for DomPatientExtractor {
 
         let ultima_dum = gql_patient.as_ref().and_then(|p| p.ultima_dum.clone());
         let idade_gestacional_dias = gql_patient.as_ref().and_then(|p| p.idade_gestacional_dias);
+        let evolucao_pre_natal = gql_patient
+            .as_ref()
+            .and_then(|p| p.evolucao_pre_natal.clone());
 
         let condicoes_saude = gql_patient.as_ref().and_then(|p| p.condicoes_saude.clone());
         let sociodemografico = gql_patient
@@ -122,6 +125,7 @@ impl PatientDataExtractor for DomPatientExtractor {
             cod_cipa,
             ultima_dum,
             idade_gestacional_dias,
+            evolucao_pre_natal,
             condicoes_saude,
             sociodemografico,
             session_info,

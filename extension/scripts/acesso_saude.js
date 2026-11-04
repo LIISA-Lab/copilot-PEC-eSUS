@@ -33,7 +33,6 @@ const AcessoSaude = (() => {
     "Nefrologia",
     "Reumatologia",
     "Mastologia",
-    "Proctologia",
     "Odontologia - Teleconsultoria"
   ];
 
@@ -79,6 +78,34 @@ const AcessoSaude = (() => {
     return NOT_FOUND;
   }
 
+  function buildPergunta(patient) {
+    // 1. Tenta pegar do objeto patient consolidado pelo Wasm
+    let ev = patient?.evolucao_pre_natal;
+
+    // 2. Fallback direto do localStorage (caso o Wasm ainda não tenha sido recompilado)
+    if (!ev && typeof localStorage !== "undefined") {
+      try {
+        const raw = localStorage.getItem("__ESUS_GRAPHQL_DATA__");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          ev = parsed?.patient_info?.evolucao_pre_natal;
+        }
+      } catch (e) {
+        console.warn("[AcessoSaude] Falha ao ler evolucao_pre_natal do localStorage:", e);
+      }
+    }
+
+    if (!ev) return NOT_FOUND;
+
+    const blocos = [];
+    if (ev.subjetivo) blocos.push(`[Subjetivo]\n${ev.subjetivo}`);
+    if (ev.objetivo) blocos.push(`[Objetivo]\n${ev.objetivo}`);
+    if (ev.avaliacao) blocos.push(`[Avaliação]\n${ev.avaliacao}`);
+    if (ev.problema) blocos.push(`[Problema/Condição]\n${ev.problema}`);
+
+    return blocos.length > 0 ? blocos.join("\n\n") : NOT_FOUND;
+  }
+
   /**
    * Monta o payload de POST /solicitacoes/teleconsultoria_pec.
    * Campos obrigatórios não identificados no Patient recebem "not found";
@@ -114,7 +141,7 @@ const AcessoSaude = (() => {
       especialidade: required(especialidade),
       interpreteLibras: interpreteLibras ? "sim" : "nao",
       modalidade: VALORES_TESTE.modalidade,
-      pergunta: VALORES_TESTE.pergunta,
+      pergunta: buildPergunta(p),
 
       // Profissional solicitante / estabelecimento
       nomeUsuario: required(session.professional_name),

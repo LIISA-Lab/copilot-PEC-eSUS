@@ -14,6 +14,9 @@
       const clonedResponse = response.clone();
       
       clonedResponse.json().then(data => {
+        // Log para diagnóstico em tempo real
+        console.log("[e-SUS Lens Inject] Resposta GraphQL interceptada:", data);
+
         // Inicializa o state global se não existir
         if (!window.__ESUS_GRAPHQL_DATA__) {
             window.__ESUS_GRAPHQL_DATA__ = {};
@@ -202,6 +205,74 @@
                 }
 
                 isUpdated = true;
+            }
+
+            // 5. Intercepta Evolução / Histórico de Atendimento Pré-Natal (SOAP + Problema)
+            const findHistoricoAtendimento = (obj) => {
+                if (!obj || typeof obj !== 'object') return null;
+                if (obj.historicoAtendimentoPec) return obj.historicoAtendimentoPec;
+                if (obj.evolucaoSubjetivo || obj.evolucaoObjetivo || obj.evolucaoAvaliacao) return obj;
+                for (const key of Object.keys(obj)) {
+                    const found = findHistoricoAtendimento(obj[key]);
+                    if (found) return found;
+                }
+                return null;
+            };
+
+            const histAtendimento = findHistoricoAtendimento(item.data);
+            if (histAtendimento) {
+                console.log("[e-SUS Lens Inject] histAtendimento encontrado:", histAtendimento);
+                if (!window.__ESUS_GRAPHQL_DATA__.patient_info) {
+                    window.__ESUS_GRAPHQL_DATA__.patient_info = {};
+                }
+                const p = window.__ESUS_GRAPHQL_DATA__.patient_info;
+
+                const stripHtml = (html) => {
+                    if (!html || typeof html !== 'string') return null;
+                    const cleaned = html
+                        .replace(/<[^>]+>/g, ' ')
+                        .replace(/&nbsp;/gi, ' ')
+                        .replace(/\s+/g, ' ')
+                        .trim();
+                    return cleaned || null;
+                };
+
+                const subDesc = stripHtml(histAtendimento.evolucaoSubjetivo?.descricao);
+                const objDesc = stripHtml(histAtendimento.evolucaoObjetivo?.descricao);
+                const avaDesc = stripHtml(histAtendimento.evolucaoAvaliacao?.descricao);
+
+                // evolucaoProblema pode ser array ou objeto único
+                let probDesc = null;
+                const probList = Array.isArray(histAtendimento.evolucaoProblema)
+                    ? histAtendimento.evolucaoProblema
+                    : (histAtendimento.evolucaoProblema ? [histAtendimento.evolucaoProblema] : []);
+
+                for (const ep of probList) {
+                    const descOutro = ep?.problema?.descricaoOutro || ep?.descricaoOutro;
+                    if (descOutro) {
+                        probDesc = stripHtml(descOutro);
+                        if (probDesc) break;
+                    }
+                    // Se não tiver descricaoOutro, podemos capturar observação ou descrição do CIAP/CID
+                    const obs = ep?.observacao || ep?.problema?.ciap?.descricao || ep?.problema?.cid10?.nome;
+                    if (!probDesc && obs) {
+                        probDesc = stripHtml(obs);
+                    }
+                }
+
+                if (subDesc || objDesc || avaDesc || probDesc) {
+                    p.evolucao_pre_natal = {
+                        subjetivo: subDesc || p.evolucao_pre_natal?.subjetivo || null,
+                        objetivo: objDesc || p.evolucao_pre_natal?.objetivo || null,
+                        avaliacao: avaDesc || p.evolucao_pre_natal?.avaliacao || null,
+                        problema: probDesc || p.evolucao_pre_natal?.problema || null,
+                    };
+                    isUpdated = true;
+                    console.log("[e-SUS Lens] Evolução pré-natal capturada com sucesso:", p.evolucao_pre_natal);
+                } else {
+                    console.warn("[e-SUS Lens Inject] histAtendimento detectado, mas nenhum texto em subDesc/objDesc/avaDesc/probDesc");
+                }
+            }
             }
         });
 
