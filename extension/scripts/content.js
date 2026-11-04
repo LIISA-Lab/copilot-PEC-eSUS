@@ -1,54 +1,54 @@
 function showSidebar(data) {
-  // Evita duplicar a sidebar caso já exista
-  if (document.getElementById("esus-lens-sidebar")) {
-      // Atualizar dados da sidebar aberta futuramente...
-      return;
-  }
+    // Evita duplicar a sidebar caso já exista
+    if (document.getElementById("esus-lens-sidebar")) {
+        // Atualizar dados da sidebar aberta futuramente...
+        return;
+    }
 
-  // Tratamento de Elegibilidade (Motor de Regras bloqueou o paciente)
-  if (!data) {
-      alert("e-SUS Lens: Este paciente não possui critérios obstétricos registrados (CIAP/CID ou Cadastro) para iniciar a estratificação de risco.");
-      return;
-  }
+    // Tratamento de Elegibilidade (Motor de Regras bloqueou o paciente)
+    if (!data) {
+        alert("e-SUS Lens: Este paciente não possui critérios obstétricos registrados (CIAP/CID ou Cadastro) para iniciar a estratificação de risco.");
+        return;
+    }
 
-  const sidebar = document.createElement("div");
-  sidebar.id = "esus-lens-sidebar";
+    const sidebar = document.createElement("div");
+    sidebar.id = "esus-lens-sidebar";
 
-  // Estilo principal: Sidebar fixada à direita ocupando a altura toda (tipo DevTools)
-  sidebar.style.position = "fixed";
-  sidebar.style.top = "0";
-  sidebar.style.right = "0";
-  sidebar.style.width = "400px";
-  sidebar.style.height = "100vh";
-  sidebar.style.backgroundColor = "#FFFFFF"; // Fundo branco padrão
-  sidebar.style.borderLeft = "1px solid #E0E0E0"; // Borda sutil de separação
-  sidebar.style.zIndex = "999999";
-  sidebar.style.boxShadow = "-4px 0 15px rgba(0,0,0,0.05)";
-  sidebar.style.fontFamily = "'Roboto', 'Segoe UI', Arial, sans-serif";
-  sidebar.style.display = "flex";
-  sidebar.style.flexDirection = "column";
-  sidebar.style.transition = "transform 0.3s ease-in-out";
-  sidebar.style.transform = "translateX(0)";
+    // Estilo principal: Sidebar fixada à direita ocupando a altura toda (tipo DevTools)
+    sidebar.style.position = "fixed";
+    sidebar.style.top = "0";
+    sidebar.style.right = "0";
+    sidebar.style.width = "400px";
+    sidebar.style.height = "100vh";
+    sidebar.style.backgroundColor = "#FFFFFF"; // Fundo branco padrão
+    sidebar.style.borderLeft = "1px solid #E0E0E0"; // Borda sutil de separação
+    sidebar.style.zIndex = "999999";
+    sidebar.style.boxShadow = "-4px 0 15px rgba(0,0,0,0.05)";
+    sidebar.style.fontFamily = "'Roboto', 'Segoe UI', Arial, sans-serif";
+    sidebar.style.display = "flex";
+    sidebar.style.flexDirection = "column";
+    sidebar.style.transition = "transform 0.3s ease-in-out";
+    sidebar.style.transform = "translateX(0)";
 
-  // Layout interno da Sidebar (Header + Content)
-  const formatBool = (val, isRisk = false) => {
-      if (val === true) return `<span style="font-weight: 500; color: ${isRisk ? '#c62828' : '#333'};">Sim</span>`;
-      if (val === false) return `<span style="color: #555;">Não</span>`;
-      return `<span style="color: #aaa;">Não inf.</span>`;
-  };
+    // Layout interno da Sidebar (Header + Content)
+    const formatBool = (val, isRisk = false) => {
+        if (val === true) return `<span style="font-weight: 500; color: ${isRisk ? '#c62828' : '#333'};">Sim</span>`;
+        if (val === false) return `<span style="color: #555;">Não</span>`;
+        return `<span style="color: #aaa;">Não inf.</span>`;
+    };
 
-  const formatVal = (val) => val ? `<span style="font-weight: 500; color: #333;">${val}</span>` : `<span style="color: #aaa;">Não inf.</span>`;
+    const formatVal = (val) => val ? `<span style="font-weight: 500; color: #333;">${val}</span>` : `<span style="color: #aaa;">Não inf.</span>`;
 
-  const sd = data.sociodemografico || {};
-  const cs = data.condicoes_saude || {};
-  const end = data.endereco || {};
+    const sd = data.sociodemografico || {};
+    const cs = data.condicoes_saude || {};
+    const end = data.endereco || {};
 
-  sidebar.innerHTML = `
+    sidebar.innerHTML = `
     <style>
         .esus-tab { flex: 1; padding: 12px 0; border: none; background: none; cursor: pointer; font-weight: 500; font-size: 0.8rem; color: #666; border-bottom: 3px solid transparent; transition: all 0.2s; }
         .esus-tab:hover { background-color: #f1f1f1; }
         .esus-tab.active { color: #1351b4; border-bottom: 3px solid #1351b4; background-color: #F8F9FA;}
-        .esus-tab-content { display: none; padding: 16px; background-color: #F8F9FA; height: calc(100vh - 110px); overflow-y: auto;}
+        .esus-tab-content { display: none; background-color: #FFFFFF; height: calc(100vh - 110px); overflow-y: auto;}
         .esus-tab-content.active { display: block; }
 
         .esus-accordion { background: #fff; border: 1px solid #E0E0E0; border-radius: 6px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); overflow: hidden; }
@@ -65,11 +65,14 @@ function showSidebar(data) {
 
     <!-- Header simulando identidade do e-SUS PEC (Azul gov.br) -->
     <div style="background-color: #1351b4; color: white; padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #f8d117;">
-        <div style="display: flex; flex-direction: column;">
-            <h2 style="margin: 0; font-size: 1.1rem; font-weight: 500; display: flex; align-items: center; gap: 8px;">
-                <span>🩺</span> e-SUS Lens: Estratificação
+        <div style="display: flex; flex-direction: column; width: 100%">
+            <h2 style="margin: 0; font-size: 1.1rem; font-weight: 500; display: flex; align-items: center; gap: 8px">
+                e-SUS Lens Gestante
             </h2>
-            <span style="font-size: 0.7rem; color: #b3cde0; margin-top: 4px; font-family: monospace;">v${chrome.runtime.getManifest().version}</span>
+            <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 2px">
+                <span style="font-size: 1rem; color: #b3cde0; margin-top: 2px;">Estratificação de Risco</span>
+                <span style="font-size: 0.7rem; color: #b3cde0; margin-top: 4px; margin-right: 8px; font-family: monospace;">v${chrome.runtime.getManifest().version}</span>
+            </div>
         </div>
         <button id="esus-lens-close" style="background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; padding: 4px;" title="Minimizar">✖</button>
     </div>
@@ -82,519 +85,539 @@ function showSidebar(data) {
         <button class="esus-tab" data-tab="tab-acesso-saude">Acesso Saúde CE</button>
     </div>
 
-    <!-- ABA 1: VISÃO GERAL -->
-    <div id="tab-geral" class="esus-tab-content active">
+    <!-- Cartão de Classificação (COMPARTILHADO - Visível em 3 abas) -->
+    <div id="esus-card-classificacao" style="background-color: #F8FAFC; padding: 16px; border-bottom: 1px solid #E2E8F0;">
+
         <!-- Alerta de Identificação -->
-        <div style="background-color: #E8F5E9; border-left: 4px solid #4CAF50; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px;">
-            <h3 style="margin: 0 0 4px 0; color: #2E7D32; font-size: 1rem;">🤰 Paciente em Monitoramento</h3>
-            <p style="margin: 0; font-size: 0.85rem; color: #1B5E20;">Dados interceptados do e-SUS</p>
+        <div style="background-color: #E8F5E9; padding: 6px 16px; border-radius: 4px; margin-bottom: 16px; display: flex; align-items: center; max-width: 220px;">
+            <h3 style="margin: 0; color: #000000ff; font-size: 0.75rem; font-weight: 600;"> <span style="width: 12px; height: 12px; background-color: #4CAF50; border-radius: 50%; display: inline-block; margin-right: 8px;"></span>Gestante em Monitoramento</h3>
         </div>
 
-        <details class="esus-accordion" open>
-            <summary>Identificação Rápida</summary>
-            <div class="acc-content">
-                <div style="margin-bottom: 12px;">
-                    <strong class="data-label">Nome Completo</strong>
-                    ${formatVal(data.name)}
-                </div>
-                <div class="grid-2">
-                    <div>
-                        <strong class="data-label">Idade / Nasc.</strong>
-                        ${formatVal(data.age)}
-                    </div>
-                    <div>
-                        <strong class="data-label">Sexo / Gênero</strong>
-                        <span>
-                            ${data.sex ? data.sex.charAt(0).toUpperCase() + data.sex.slice(1).toLowerCase() : 'Não inf.'}
-                            ${data.gender_identity ? `<br><small style="color:#777;">(${data.gender_identity.replace('_', ' ')})</small>` : ''}
-                        </span>
-                    </div>
-                </div>
-                <div class="grid-2">
-                    <div>
-                        <strong class="data-label">CPF</strong>
-                        ${formatVal(data.cpf)}
-                    </div>
-                    <div>
-                        <strong class="data-label">CNS</strong>
-                        ${formatVal(data.cns)}
-                    </div>
-                </div>
+        <!-- Cartão de Paciente -->
+        <div style="background-color: #FFFFFF; border: 1px solid #E0E0E0; border-radius: 6px; padding: 12px 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+            <div style="margin-bottom: 8px; display: flex; flex-direction: row; align-items: center;">
+                <h3 style="margin: 0 8px 0 0; font-size: 0.95rem; font-weight: 600; color: #333;">
+                    ${data.name || 'Paciente sem identificação'}
+                </h3>
+                <p style="margin: 0; font-size: 0.75rem; font-weight: 200; color: #666;">
+                    <strong>${data.age || 'Idade não informada'}</strong>
+                </p>
             </div>
-        </details>
-
-        <details class="esus-accordion" open>
-            <summary>Módulo Obstétrico</summary>
-            <div class="acc-content">
-                <div class="grid-2">
-                    <div>
-                        <strong class="data-label">Última DUM</strong>
-                        <span style="font-weight: 500; color: #D84315;">${data.ultima_dum || 'Sem Registro'}</span>
-                    </div>
-                    <div>
-                        <strong class="data-label">Idade Gestacional</strong>
-                        <span style="font-weight: 500; color: #1565C0;">
-                            ${data.idade_gestacional_dias ? Math.floor(data.idade_gestacional_dias / 7) + ' sem ' + (data.idade_gestacional_dias % 7) + ' d' : 'Sem Registro'}
-                        </span>
+            <div style="background-color: #FFF3CD; border: 1px solid #FFC107; padding: 8px 12px; border-radius: 3px;">
+                <div style="display: flex; align-items: center; margin-bottom: 4px;">
+                    <p style="margin: 0; font-size: 1rem; background-color: #FFC107; padding: 0.5rem; border-radius: 4px; color: #FFD230; font-weight: 600; margin-right: 8px;">
+                        ⚠️ 
+                    </p>
+                    <div style="margin-bottom: 4px; display: flex; flex-direction: column;">
+                        <strong style="font-size: 10px; font-weight: 600;">CLASSIFICAÇÃO DE RISCO</strong> 
+                        <strong style="font-size: 14px; font-weight: 700;">Risco Intermediário</strong>
                     </div>
                 </div>
-                <div style="margin-bottom: 12px;">
-                    <strong class="data-label">CIPA Atual</strong>
-                    <span style="background-color: #E3F2FD; color: #1565C0; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; display: inline-block; margin-top: 4px;">
-                        ${data.cod_cipa || '-'}
+                <span style="font-size: 14px; font-weight: 200; color: #973C00;">Verifique os dados clínicos e sócio-demográficos antes de qualquer conduta.</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ABA 1: VISÃO GERAL -->
+    <div id="tab-geral" class="esus-tab-content active">
+
+        <!-- Button Group para Geral / Social / Clínico -->
+        <div style="background-color: #E8E8E8; border-radius: 6px; padding: 4px; display: flex; gap: 4px; margin: 16px 16px 16px 16px;">
+            <button class="esus-btn-group active" data-section="geral" style="flex: 1; padding: 10px; border: none; background-color: #FFFFFF; color: #333; font-weight: 500; font-size: 0.85rem; cursor: pointer; border-radius: 4px; transition: all 0.2s;">Geral</button>
+            <button class="esus-btn-group" data-section="social" style="flex: 1; padding: 10px; border: none; background-color: transparent; color: #666; font-weight: 500; font-size: 0.85rem; cursor: pointer; border-radius: 4px; transition: all 0.2s;">Social</button>
+            <button class="esus-btn-group" data-section="clinico" style="flex: 1; padding: 10px; border: none; background-color: transparent; color: #666; font-weight: 500; font-size: 0.85rem; cursor: pointer; border-radius: 4px; transition: all 0.2s;">Clínico</button>
+        </div>
+
+        <!-- Conteúdo dinâmico baseado no button group - FORMATO GRADE -->
+        <div id="section-geral" class="esus-section-content" style="padding: 0 16px; background-color: #FFFFFF; display: block;">
+            <!-- Grid de dados -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 16px;">
+                <!-- Linha 1 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Nome Completo</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">${data.name || 'Não inf.'}</span>
+                </div>
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Idade / Nasc.</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">${data.age || 'Não inf.'}</span>
+                </div>
+
+                <!-- Linha 2 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">CPF</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">${data.cpf || 'Não inf.'}</span>
+                </div>
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">CNS</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">${data.cns || 'Não inf.'}</span>
+                </div>
+
+                <!-- Linha 3 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Sexo / Gênero</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">
+                        ${data.sex ? data.sex.charAt(0).toUpperCase() + data.sex.slice(1).toLowerCase() : 'Não inf.'}
+                        ${data.gender_identity ? `<br><small style="color:#777;">(${data.gender_identity.replace('_', ' ')})</small>` : ''}
                     </span>
                 </div>
-                <div>
-                    <strong class="data-label">Status de Risco Clínico</strong>
-                    <span style="color: #9E9E9E; font-style: italic; font-size: 0.85rem;">Aguardando motor de regras...</span>
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Última DUM</span>
+                    <span style="font-weight: 600; color: #D84315; font-size: 0.9rem;">${data.ultima_dum || 'Sem Registro'}</span>
                 </div>
-            </div>
-        </details>
 
-        <details class="esus-accordion">
-            <summary>Profissional Logado</summary>
-            <div class="acc-content">
-                <div style="margin-bottom: 12px;">
-                    <strong class="data-label">Médico / Profissional</strong>
-                    <span style="font-weight: 500; color: #1351b4;">
+                <!-- Linha 4 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Idade Gestacional</span>
+                    <span style="font-weight: 600; color: #1565C0; font-size: 0.9rem;">
+                        ${data.idade_gestacional_dias ? Math.floor(data.idade_gestacional_dias / 7) + ' sem ' + (data.idade_gestacional_dias % 7) + ' d' : 'Sem Registro'}
+                    </span>
+                </div>
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">CIPA Atual</span>
+                    <span style="font-weight: 600; color: #1565C0; font-size: 0.9rem;">${data.cod_cipa || '-'}</span>
+                </div>
+
+                <!-- Linha 5 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Profissional Logado</span>
+                    <span style="font-weight: 600; color: #1351b4; font-size: 0.9rem;">
                         ${data.session_info ? data.session_info.professional_name : 'Intercepção Pendente...'}
                     </span>
                 </div>
-                <div class="grid-2">
-                    <div>
-                        <strong class="data-label">CBO</strong>
-                        ${formatVal(data.session_info?.cbo_name)}
-                    </div>
-                    <div>
-                        <strong class="data-label">Unidade (UBS)</strong>
-                        <span style="font-size: 0.8rem;">${data.session_info?.health_unit_name || 'Não inf.'}</span>
-                    </div>
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">CBO</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">${data.session_info?.cbo_name || 'Não inf.'}</span>
                 </div>
-                <div class="grid-2">
-                    <div>
-                        <strong class="data-label">CNES</strong>
-                        ${formatVal(data.session_info?.health_unit_cnes)}
-                    </div>
-                    <div>
-                        <strong class="data-label">Município</strong>
-                        ${formatVal(data.session_info?.municipio_nome)}
-                    </div>
+
+                <!-- Linha 6 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Unidade (UBS)</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">${data.session_info?.health_unit_name || 'Não inf.'}</span>
                 </div>
-                <div>
-                    <strong class="data-label">Conselho de Classe</strong>
-                    ${formatVal(
-                        data.session_info?.conselho_classe_sigla || data.session_info?.numero_conselho_classe
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">CNES</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">${data.session_info?.health_unit_cnes || 'Não inf.'}</span>
+                </div>
+
+                <!-- Linha 7 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Município</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">${data.session_info?.municipio_nome || 'Não inf.'}</span>
+                </div>
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Conselho de Classe</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">
+                        ${data.session_info?.conselho_classe_sigla || data.session_info?.numero_conselho_classe
                             ? [
                                 data.session_info?.conselho_classe_sigla,
                                 data.session_info?.numero_conselho_classe,
                               ].filter(Boolean).join(' ') +
                               (data.session_info?.uf_conselho_classe_sigla ? `/${data.session_info.uf_conselho_classe_sigla}` : '')
-                            : null
-                    )}
+                            : 'Não inf.'}
+                    </span>
                 </div>
             </div>
-        </details>
+        </div>
+
+        <div id="section-social" class="esus-section-content" style="display: none; padding: 0 16px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 16px;">
+                <!-- Linha 1 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Telefone Celular</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">${data.telefone_celular || 'Não inf.'}</span>
+                </div>
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Raça / Cor</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">${data.raca_cor || 'Não inf.'}</span>
+                </div>
+
+                <!-- Linha 2 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF; grid-column: 1 / -1;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Nome da Mãe</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">${data.mother_name || 'Não inf.'}</span>
+                </div>
+
+                <!-- Linha 3 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF; grid-column: 1 / -1;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Logradouro</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">
+                        ${[end.tipo_logradouro?.nome, end.logradouro].filter(Boolean).join(' ') || end.logradouro || 'Não inf.'}
+                        ${end.numero ? `, nº ${end.numero}` : (end.sem_numero ? ', S/N' : '')}
+                    </span>
+                </div>
+
+                <!-- Linha 4 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Bairro</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">${end.bairro || 'Não inf.'}</span>
+                </div>
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">CEP</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">${end.cep || 'Não inf.'}</span>
+                </div>
+
+                <!-- Linha 5 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Município / UF</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">
+                        ${[end.municipio?.nome, end.uf?.nome].filter(Boolean).join(' / ') || 'Não inf.'}
+                    </span>
+                </div>
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Complemento</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">${end.complemento || 'Não inf.'}</span>
+                </div>
+
+                <!-- Linha 6 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF; grid-column: 1 / -1;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Ponto de Referência</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">${end.ponto_referencia || 'Não inf.'}</span>
+                </div>
+
+                <!-- Linha 7 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Escolaridade</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">${sd.escolaridade || 'Não inf.'}</span>
+                </div>
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Ocupação (CBO)</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">${sd.ocupacao || 'Não inf.'}</span>
+                </div>
+
+                <!-- Linha 8 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Situação no Mercado</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">
+                        ${sd.situacao_mercado_trabalho ? sd.situacao_mercado_trabalho.replace(/_/g, ' ') : 'Não inf.'}
+                    </span>
+                </div>
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Plano de Saúde Privado</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">${sd.possui_plano_saude_privado ? 'Sim' : 'Não'}</span>
+                </div>
+
+                <!-- Linha 9 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Possui Deficiência</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">${sd.possui_deficiencia ? 'Sim' : 'Não'}</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="section-clinico" class="esus-section-content" style="display: none; padding: 0 16px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 16px;">
+                <!-- Linha 1 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Hipertensão Arterial</span>
+                    <span style="font-weight: 600; color: ${cs.hipertensao_arterial ? '#c62828' : '#333'}; font-size: 0.9rem;">${cs.hipertensao_arterial ? 'Sim' : 'Não'}</span>
+                </div>
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Diabetes</span>
+                    <span style="font-weight: 600; color: ${cs.diabetes ? '#c62828' : '#333'}; font-size: 0.9rem;">${cs.diabetes ? 'Sim' : 'Não'}</span>
+                </div>
+
+                <!-- Linha 2 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Doença Cardíaca</span>
+                    <span style="font-weight: 600; color: ${cs.doenca_cardiaca ? '#c62828' : '#333'}; font-size: 0.9rem;">${cs.doenca_cardiaca ? 'Sim' : 'Não'}</span>
+                    ${cs.detalhes_doenca_cardiaca ? `<div style="font-size:0.75rem; color:#d32f2f; margin-top:4px;">${cs.detalhes_doenca_cardiaca.join(', ').replace(/_/g, ' ')}</div>` : ''}
+                </div>
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Problemas nos Rins</span>
+                    <span style="font-weight: 600; color: ${cs.problema_rins ? '#c62828' : '#333'}; font-size: 0.9rem;">${cs.problema_rins ? 'Sim' : 'Não'}</span>
+                    ${cs.detalhes_doenca_rins ? `<div style="font-size:0.75rem; color:#d32f2f; margin-top:4px;">${cs.detalhes_doenca_rins.join(', ').replace(/_/g, ' ')}</div>` : ''}
+                </div>
+
+                <!-- Linha 3 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Asma / DPOC</span>
+                    <span style="font-weight: 600; color: ${cs.doenca_respiratoria ? '#c62828' : '#333'}; font-size: 0.9rem;">${cs.doenca_respiratoria ? 'Sim' : 'Não'}</span>
+                    ${cs.detalhes_doenca_respiratoria ? `<div style="font-size:0.75rem; color:#d32f2f; margin-top:4px;">${cs.detalhes_doenca_respiratoria.join(', ').replace(/_/g, ' ')}</div>` : ''}
+                </div>
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Câncer</span>
+                    <span style="font-weight: 600; color: ${cs.cancer ? '#c62828' : '#333'}; font-size: 0.9rem;">${cs.cancer ? 'Sim' : 'Não'}</span>
+                </div>
+
+                <!-- Linha 4 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Derrame / AVC</span>
+                    <span style="font-weight: 600; color: ${cs.derrame ? '#c62828' : '#333'}; font-size: 0.9rem;">${cs.derrame ? 'Sim' : 'Não'}</span>
+                </div>
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Infarto</span>
+                    <span style="font-weight: 600; color: ${cs.infarto ? '#c62828' : '#333'}; font-size: 0.9rem;">${cs.infarto ? 'Sim' : 'Não'}</span>
+                </div>
+
+                <!-- Linha 5 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Hanseníase</span>
+                    <span style="font-weight: 600; color: ${cs.hanseniase ? '#c62828' : '#333'}; font-size: 0.9rem;">${cs.hanseniase ? 'Sim' : 'Não'}</span>
+                </div>
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Tuberculose</span>
+                    <span style="font-weight: 600; color: ${cs.tuberculose ? '#c62828' : '#333'}; font-size: 0.9rem;">${cs.tuberculose ? 'Sim' : 'Não'}</span>
+                </div>
+
+                <!-- Linha 6 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Acamado</span>
+                    <span style="font-weight: 600; color: ${cs.acamado ? '#c62828' : '#333'}; font-size: 0.9rem;">${cs.acamado ? 'Sim' : 'Não'}</span>
+                </div>
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Atendimento Domiciliar</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">${cs.domiciliar ? 'Sim' : 'Não'}</span>
+                </div>
+
+                <!-- Linha 7 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Problema de Saúde Mental</span>
+                    <span style="font-weight: 600; color: ${cs.saude_mental ? '#c62828' : '#333'}; font-size: 0.9rem;">${cs.saude_mental ? 'Sim' : 'Não'}</span>
+                </div>
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Internação 12 Meses</span>
+                    <span style="font-weight: 600; color: ${cs.internacao_12_meses ? '#c62828' : '#333'}; font-size: 0.9rem;">${cs.internacao_12_meses ? 'Sim' : 'Não'}</span>
+                    ${cs.causa_internacao ? `<div style="font-size:0.75rem; color:#d32f2f; margin-top:4px;">Motivo: ${cs.causa_internacao}</div>` : ''}
+                </div>
+
+                <!-- Linha 8 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Fumante</span>
+                    <span style="font-weight: 600; color: ${cs.fumante ? '#c62828' : '#333'}; font-size: 0.9rem;">${cs.fumante ? 'Sim' : 'Não'}</span>
+                </div>
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Uso de Álcool</span>
+                    <span style="font-weight: 600; color: ${cs.uso_alcool ? '#c62828' : '#333'}; font-size: 0.9rem;">${cs.uso_alcool ? 'Sim' : 'Não'}</span>
+                </div>
+
+                <!-- Linha 9 -->
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Uso de Outras Drogas</span>
+                    <span style="font-weight: 600; color: ${cs.uso_drogas ? '#c62828' : '#333'}; font-size: 0.9rem;">${cs.uso_drogas ? 'Sim' : 'Não'}</span>
+                </div>
+                <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: #888; display: block; margin-bottom: 4px;">Uso de Plantas Med.</span>
+                    <span style="font-weight: 600; color: #333; font-size: 0.9rem;">${cs.plantas_medicinais ? 'Sim' : 'Não'}</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- ABA 2: SÓCIO-DEMOGRÁFICO -->
     <div id="tab-socio" class="esus-tab-content">
-        <details class="esus-accordion" open>
-            <summary>Contato e Raça/Cor</summary>
-            <div class="acc-content">
-                <div class="grid-2">
-                    <div>
-                        <strong class="data-label">Telefone Celular</strong>
-                        ${formatVal(data.telefone_celular)}
-                    </div>
-                    <div>
-                        <strong class="data-label">Raça / Cor</strong>
-                        ${formatVal(data.raca_cor)}
-                    </div>
-                </div>
-                <div>
-                    <strong class="data-label">Nome da Mãe</strong>
-                    ${formatVal(data.mother_name)}
-                </div>
-            </div>
-        </details>
-
-        <details class="esus-accordion" open>
-            <summary>Endereço Residencial</summary>
-            <div class="acc-content">
-                <div style="margin-bottom: 12px;">
-                    <strong class="data-label">Logradouro</strong>
-                    ${formatVal([end.tipo_logradouro?.nome, end.logradouro].filter(Boolean).join(' ') || end.logradouro)}
-                    ${end.numero ? `, nº ${end.numero}` : (end.sem_numero ? ', S/N' : '')}
-                </div>
-                <div class="grid-2">
-                    <div>
-                        <strong class="data-label">Bairro</strong>
-                        ${formatVal(end.bairro)}
-                    </div>
-                    <div>
-                        <strong class="data-label">CEP</strong>
-                        ${formatVal(end.cep)}
-                    </div>
-                </div>
-                <div class="grid-2">
-                    <div>
-                        <strong class="data-label">Município / UF</strong>
-                        ${formatVal([end.municipio?.nome, end.uf?.nome].filter(Boolean).join(' / '))}
-                    </div>
-                    <div>
-                        <strong class="data-label">Complemento</strong>
-                        ${formatVal(end.complemento)}
-                    </div>
-                </div>
-                <div>
-                    <strong class="data-label">Ponto de Referência</strong>
-                    ${formatVal(end.ponto_referencia)}
-                </div>
-            </div>
-        </details>
-
-        <details class="esus-accordion" open>
-            <summary>Educação e Trabalho</summary>
-            <div class="acc-content">
-                <div style="margin-bottom: 12px;">
-                    <strong class="data-label">Escolaridade</strong>
-                    ${formatVal(sd.escolaridade)}
-                </div>
-                <div style="margin-bottom: 12px;">
-                    <strong class="data-label">Ocupação (CBO)</strong>
-                    ${formatVal(sd.ocupacao)}
-                </div>
-                <div>
-                    <strong class="data-label">Situação no Mercado</strong>
-                    ${formatVal(sd.situacao_mercado_trabalho ? sd.situacao_mercado_trabalho.replace(/_/g, ' ') : null)}
-                </div>
-            </div>
-        </details>
-
-        <details class="esus-accordion" open>
-            <summary>Informações Sociais</summary>
-            <div class="acc-content">
-                <div class="grid-2">
-                    <div>
-                        <strong class="data-label">Plano de Saúde Privado?</strong>
-                        ${formatBool(sd.possui_plano_saude_privado)}
-                    </div>
-                    <div>
-                        <strong class="data-label">Possui Deficiência?</strong>
-                        ${formatBool(sd.possui_deficiencia)}
-                    </div>
-                </div>
-            </div>
-        </details>
+        <!-- Conteúdo da aba Sócio-Demográfico -->
     </div>
 
-    <!-- ABA 3: CONDIÇÕES DE SAÚDE (CLÍNICO) -->
+    <!-- ABA 3: CLÍNICO -->
     <div id="tab-saude" class="esus-tab-content">
-        <div style="background-color: #FFF3E0; border-left: 4px solid #FF9800; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px;">
-            <p style="margin: 0; font-size: 0.85rem; color: #E65100;">Estes dados são auto-referidos pela paciente durante o Cadastro Individual.</p>
-        </div>
-
-        <details class="esus-accordion" open>
-            <summary>Doenças Crônicas</summary>
-            <div class="acc-content">
-                <div class="grid-2">
-                    <div>
-                        <strong class="data-label">Hipertensão Arterial</strong>
-                        ${formatBool(cs.hipertensao_arterial, true)}
-                    </div>
-                    <div>
-                        <strong class="data-label">Diabetes</strong>
-                        ${formatBool(cs.diabetes, true)}
-                    </div>
-                </div>
-                <div class="grid-2">
-                    <div>
-                        <strong class="data-label">Doença Cardíaca</strong>
-                        ${formatBool(cs.doenca_cardiaca, true)}
-                        ${cs.detalhes_doenca_cardiaca ? `<div style="font-size:0.75rem; color:#d32f2f; margin-top:2px;">${cs.detalhes_doenca_cardiaca.join(', ').replace(/_/g, ' ')}</div>` : ''}
-                    </div>
-                    <div>
-                        <strong class="data-label">Problemas nos Rins</strong>
-                        ${formatBool(cs.problema_rins, true)}
-                        ${cs.detalhes_doenca_rins ? `<div style="font-size:0.75rem; color:#d32f2f; margin-top:2px;">${cs.detalhes_doenca_rins.join(', ').replace(/_/g, ' ')}</div>` : ''}
-                    </div>
-                </div>
-                <div class="grid-2">
-                    <div>
-                        <strong class="data-label">Asma / DPOC</strong>
-                        ${formatBool(cs.doenca_respiratoria, true)}
-                        ${cs.detalhes_doenca_respiratoria ? `<div style="font-size:0.75rem; color:#d32f2f; margin-top:2px;">${cs.detalhes_doenca_respiratoria.join(', ').replace(/_/g, ' ')}</div>` : ''}
-                    </div>
-                    <div>
-                        <strong class="data-label">Câncer</strong>
-                        ${formatBool(cs.cancer, true)}
-                    </div>
-                </div>
-            </div>
-        </details>
-        
-        <details class="esus-accordion" open>
-            <summary>Eventos Cardiovasculares e Infecciosos</summary>
-            <div class="acc-content">
-                <div class="grid-2">
-                    <div>
-                        <strong class="data-label">Derrame / AVC</strong>
-                        ${formatBool(cs.derrame, true)}
-                    </div>
-                    <div>
-                        <strong class="data-label">Infarto</strong>
-                        ${formatBool(cs.infarto, true)}
-                    </div>
-                </div>
-                <div class="grid-2">
-                    <div>
-                        <strong class="data-label">Hanseníase</strong>
-                        ${formatBool(cs.hanseniase, true)}
-                    </div>
-                    <div>
-                        <strong class="data-label">Tuberculose</strong>
-                        ${formatBool(cs.tuberculose, true)}
-                    </div>
-                </div>
-            </div>
-        </details>
-
-        <details class="esus-accordion" open>
-            <summary>Condições Especiais</summary>
-            <div class="acc-content">
-                <div class="grid-2">
-                    <div>
-                        <strong class="data-label">Acamado</strong>
-                        ${formatBool(cs.acamado, true)}
-                    </div>
-                    <div>
-                        <strong class="data-label">Atendimento Domiciliar</strong>
-                        ${formatBool(cs.domiciliar, false)}
-                    </div>
-                </div>
-                <div class="grid-2">
-                    <div>
-                        <strong class="data-label">Problema de Saúde Mental</strong>
-                        ${formatBool(cs.saude_mental, true)}
-                    </div>
-                    <div>
-                        <strong class="data-label">Internação 12 Meses</strong>
-                        ${formatBool(cs.internacao_12_meses, true)}
-                        ${cs.causa_internacao ? `<div style="font-size:0.75rem; color:#d32f2f; margin-top:2px;">Motivo: ${cs.causa_internacao}</div>` : ''}
-                    </div>
-                </div>
-            </div>
-        </details>
-
-        <details class="esus-accordion" open>
-            <summary>Hábitos</summary>
-            <div class="acc-content">
-                <div class="grid-2">
-                    <div>
-                        <strong class="data-label">Fumante</strong>
-                        ${formatBool(cs.fumante, true)}
-                    </div>
-                    <div>
-                        <strong class="data-label">Uso de Álcool</strong>
-                        ${formatBool(cs.uso_alcool, true)}
-                    </div>
-                </div>
-                <div class="grid-2">
-                    <div>
-                        <strong class="data-label">Uso de Outras Drogas</strong>
-                        ${formatBool(cs.uso_drogas, true)}
-                    </div>
-                    <div>
-                        <strong class="data-label">Uso de Plantas Med.</strong>
-                        ${formatBool(cs.plantas_medicinais, false)}
-                    </div>
-                </div>
-            </div>
-        </details>
+        <!-- Conteúdo da aba Clínico -->
     </div>
 
-    <!-- ABA 4: ACESSO SAÚDE CE (Teleconsultoria) -->
+    <!-- ABA 4: ACESSO SAÚDE CE (Sem Cartão de Classificação) -->
     <div id="tab-acesso-saude" class="esus-tab-content">
         ${AcessoSaude.tabHtml()}
     </div>
   `;
 
-  document.body.appendChild(sidebar);
+    document.body.appendChild(sidebar);
 
-  // Aba Acesso Saúde CE: paciente atual + carregamento das especialidades
-  AcessoSaude.setPatient(data);
-  AcessoSaude.init(sidebar);
+    // Aba Acesso Saúde CE: paciente atual + carregamento das especialidades
+    AcessoSaude.setPatient(data);
+    AcessoSaude.init(sidebar);
 
-  // Lógica das Abas (Tabs)
-  const tabButtons = sidebar.querySelectorAll('.esus-tab');
-  const tabContents = sidebar.querySelectorAll('.esus-tab-content');
+    // Lógica das Abas (Tabs)
+    const tabButtons = sidebar.querySelectorAll('.esus-tab');
+    const tabContents = sidebar.querySelectorAll('.esus-tab-content');
 
-  tabButtons.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-          // Remove active de todos
-          tabButtons.forEach(b => b.classList.remove('active'));
-          tabContents.forEach(c => c.classList.remove('active'));
-          
-          // Adiciona active no clicado
-          e.target.classList.add('active');
-          const tabId = e.target.getAttribute('data-tab');
-          sidebar.querySelector('#' + tabId).classList.add('active');
-      });
-  });
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            // Remove active de todos
+            tabButtons.forEach(b => b.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+
+            // Adiciona active no clicado
+            e.target.classList.add('active');
+            const tabId = e.target.getAttribute('data-tab');
+            sidebar.querySelector('#' + tabId).classList.add('active');
+        });
+    });
+
+    // Lógica do Button Group (Geral / Social / Clínico) dentro da aba Visão Geral
+    const btnGroup = sidebar.querySelectorAll('.esus-btn-group');
+    const sectionContents = sidebar.querySelectorAll('.esus-section-content');
+
+    btnGroup.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            // Remove active de todos
+            btnGroup.forEach(b => {
+                b.style.backgroundColor = 'transparent';
+                b.style.color = '#666';
+            });
+            sectionContents.forEach(s => s.style.display = 'none');
+
+            // Adiciona active no clicado
+            e.target.style.backgroundColor = '#FFFFFF';
+            e.target.style.color = '#333';
+            e.target.style.fontWeight = '500';
+            const sectionId = e.target.getAttribute('data-section');
+            sidebar.querySelector('#section-' + sectionId).style.display = 'block';
+        });
+    });
 
     // Lógica para empurrar o conteúdo do e-SUS para o lado
     // Lógica para empurrar o conteúdo do e-SUS para o lado
     document.body.style.transition = "padding-right 0.3s ease-in-out";
     document.body.style.paddingRight = "400px";
-  
+
     // Marca como aberta no sistema de controle
     isSidebarOpen = true;
 
     // Botão fechar (Minimizar)
     document.getElementById("esus-lens-close").addEventListener("click", () => {
-      sidebar.style.transform = "translateX(400px)";
-      document.body.style.paddingRight = "0";
-      isSidebarOpen = false; // Libera para abrir sozinho de novo se navegar pra outra gestante
-    
-      // Adiciona um botão flutuante para reabrir (Miniatura)
-      showReopenButton(sidebar);
+        sidebar.style.transform = "translateX(400px)";
+        document.body.style.paddingRight = "0";
+        isSidebarOpen = false; // Libera para abrir sozinho de novo se navegar pra outra gestante
+
+        // Adiciona um botão flutuante para reabrir (Miniatura)
+        showReopenButton(sidebar);
     });
-  }
+}
 
-  function showReopenButton(sidebarRef) {
-      if (document.getElementById("esus-lens-reopen")) {
-          document.getElementById("esus-lens-reopen").style.display = "flex";
-          return;
-      }
-
-      const btn = document.createElement("button");
-      btn.id = "esus-lens-reopen";
-      btn.innerHTML = "🩺 e-SUS Lens";
-      btn.title = "Abrir Painel de Estratificação";
-    
-      // Estilo flutuante no canto da tela
-      btn.style.position = "fixed";
-      btn.style.bottom = "24px";
-      btn.style.right = "24px";
-      btn.style.backgroundColor = "#1351b4";
-      btn.style.color = "white";
-      btn.style.border = "none";
-      btn.style.borderRadius = "24px";
-      btn.style.padding = "10px 20px";
-      btn.style.fontSize = "0.9rem";
-      btn.style.fontWeight = "bold";
-      btn.style.boxShadow = "0 4px 6px rgba(0,0,0,0.2)";
-      btn.style.cursor = "pointer";
-      btn.style.zIndex = "999999";
-      btn.style.display = "flex";
-      btn.style.alignItems = "center";
-      btn.style.gap = "8px";
-
-      btn.addEventListener("click", () => {
-          sidebarRef.style.transform = "translateX(0)";
-          document.body.style.paddingRight = "400px";
-          btn.style.display = "none";
-          isSidebarOpen = true; // Atualiza a flag
-      });
-
-      document.body.appendChild(btn);
-  }
-
-  // ─── FRENTE 2: EMBED DE TUTELAMENTO NA UI DO PEC (DOM INJECTION) ────────────
-
-  /**
-   * Abre a sidebar posicionando diretamente na aba "Acesso Saúde CE"
-   */
-  function openSidebarToAcessoSaude() {
-    const sidebar = document.getElementById("esus-lens-sidebar");
-    if (!sidebar) {
-      runWasmExtractor(false);
-      return;
-    }
-    sidebar.style.transform = "translateX(0)";
-    document.body.style.paddingRight = "400px";
-    isSidebarOpen = true;
-
-    const btnAcesso = sidebar.querySelector('button[data-tab="tab-acesso-saude"]');
-    if (btnAcesso) btnAcesso.click();
-
-    const reopen = document.getElementById("esus-lens-reopen");
-    if (reopen) reopen.style.display = "none";
-  }
-
-  /**
-   * Injeta avisos contextuais e badges de tutelamento diretamente na página do e-SUS PEC
-   */
-  function embedPecGuidance(patient) {
-    if (!patient || !AcessoSaude?.avaliarCompletude) return;
-
-    // Remove embeds anteriores para reavaliar sem duplicar
-    const oldBanner = document.getElementById("esus-lens-pec-banner");
-    if (oldBanner) oldBanner.remove();
-
-    const avaliacao = AcessoSaude.avaliarCompletude(patient, "", "");
-    const headerAlvo = document.querySelector("h2.css-k7p917");
-    if (!headerAlvo || !headerAlvo.parentElement) return;
-
-    const banner = document.createElement("div");
-    banner.id = "esus-lens-pec-banner";
-    banner.style.margin = "10px 0 14px 0";
-    banner.style.padding = "10px 14px";
-    banner.style.borderRadius = "6px";
-    banner.style.fontFamily = "'Roboto', 'Segoe UI', Arial, sans-serif";
-    banner.style.fontSize = "0.85rem";
-    banner.style.display = "flex";
-    banner.style.alignItems = "center";
-    banner.style.justifyContent = "space-between";
-    banner.style.boxShadow = "0 1px 3px rgba(0,0,0,0.08)";
-    banner.style.transition = "all 0.2s ease-in-out";
-
-    if (avaliacao.prontoParaEnvio) {
-      banner.style.backgroundColor = "#E8F5E9";
-      banner.style.borderLeft = "4px solid #4CAF50";
-      banner.style.color = "#1B5E20";
-
-      banner.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 1.1rem;">🩺</span>
-          <span>
-            <strong>e-SUS Lens:</strong> Dados clínicos aptos para solicitar teleconsultoria no <strong>Acesso Saúde CE</strong>.
-          </span>
-        </div>
-        <button id="esus-lens-btn-abrir-acesso" style="background-color: #2E7D32; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 0.8rem; white-space: nowrap;">
-          Solicitar Parecer ➔
-        </button>
-      `;
-    } else {
-      banner.style.backgroundColor = "#FFF3CD";
-      banner.style.borderLeft = "4px solid #FFA000";
-      banner.style.color = "#856404";
-
-      const pendenciasTexto = avaliacao.criticosPendentes.map((c) => c.titulo).join(", ");
-
-      banner.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 1.1rem;">💡</span>
-          <div>
-            <strong>e-SUS Lens (Acesso Saúde CE):</strong> Faltam dados essenciais para teleconsultoria:
-            <span style="color: #d32f2f; font-weight: 500;"> ${pendenciasTexto}</span>.
-          </div>
-        </div>
-        <button id="esus-lens-btn-abrir-acesso" style="background-color: #1351b4; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 0.8rem; white-space: nowrap; margin-left: 12px;">
-          Verificar Pendências ➔
-        </button>
-      `;
+function showReopenButton(sidebarRef) {
+    if (document.getElementById("esus-lens-reopen")) {
+        document.getElementById("esus-lens-reopen").style.display = "flex";
+        return;
     }
 
-    // Insere o banner diretamente na interface do PEC, logo abaixo do nome do paciente
-    headerAlvo.parentElement.insertAdjacentElement("afterend", banner);
+    const btn = document.createElement("button");
+    btn.id = "esus-lens-reopen";
+    btn.innerHTML = "🩺 e-SUS Lens";
+    btn.title = "Abrir Painel de Estratificação";
 
-    // Evento de clique para abrir a sidebar diretamente na aba correta
-    banner.querySelector("#esus-lens-btn-abrir-acesso")?.addEventListener("click", (e) => {
-      e.preventDefault();
-      openSidebarToAcessoSaude();
+    // Estilo flutuante no canto da tela
+    btn.style.position = "fixed";
+    btn.style.bottom = "24px";
+    btn.style.right = "24px";
+    btn.style.backgroundColor = "#1351b4";
+    btn.style.color = "white";
+    btn.style.border = "none";
+    btn.style.borderRadius = "24px";
+    btn.style.padding = "10px 20px";
+    btn.style.fontSize = "0.9rem";
+    btn.style.fontWeight = "bold";
+    btn.style.boxShadow = "0 4px 6px rgba(0,0,0,0.2)";
+    btn.style.cursor = "pointer";
+    btn.style.zIndex = "999999";
+    btn.style.display = "flex";
+    btn.style.alignItems = "center";
+    btn.style.gap = "8px";
+
+    btn.addEventListener("click", () => {
+        sidebarRef.style.transform = "translateX(0)";
+        document.body.style.paddingRight = "400px";
+        btn.style.display = "none";
+        isSidebarOpen = true; // Atualiza a flag
     });
-  }
+
+    document.body.appendChild(btn);
+}
+
+// ─── FRENTE 2: EMBED DE TUTELAMENTO NA UI DO PEC (DOM INJECTION) ────────────
+
+/**
+ * Abre a sidebar posicionando diretamente na aba "Acesso Saúde CE"
+ */
+function openSidebarToAcessoSaude() {
+const sidebar = document.getElementById("esus-lens-sidebar");
+if (!sidebar) {
+    runWasmExtractor(false);
+    return;
+}
+sidebar.style.transform = "translateX(0)";
+document.body.style.paddingRight = "400px";
+isSidebarOpen = true;
+
+const btnAcesso = sidebar.querySelector('button[data-tab="tab-acesso-saude"]');
+if (btnAcesso) btnAcesso.click();
+
+const reopen = document.getElementById("esus-lens-reopen");
+if (reopen) reopen.style.display = "none";
+}
+
+/**
+ * Injeta avisos contextuais e badges de tutelamento diretamente na página do e-SUS PEC
+ */
+function embedPecGuidance(patient) {
+if (!patient || !AcessoSaude?.avaliarCompletude) return;
+
+// Remove embeds anteriores para reavaliar sem duplicar
+const oldBanner = document.getElementById("esus-lens-pec-banner");
+if (oldBanner) oldBanner.remove();
+
+const avaliacao = AcessoSaude.avaliarCompletude(patient, "", "");
+const headerAlvo = document.querySelector("h2.css-k7p917");
+if (!headerAlvo || !headerAlvo.parentElement) return;
+
+const banner = document.createElement("div");
+banner.id = "esus-lens-pec-banner";
+banner.style.margin = "10px 0 14px 0";
+banner.style.padding = "10px 14px";
+banner.style.borderRadius = "6px";
+banner.style.fontFamily = "'Roboto', 'Segoe UI', Arial, sans-serif";
+banner.style.fontSize = "0.85rem";
+banner.style.display = "flex";
+banner.style.alignItems = "center";
+banner.style.justifyContent = "space-between";
+banner.style.boxShadow = "0 1px 3px rgba(0,0,0,0.08)";
+banner.style.transition = "all 0.2s ease-in-out";
+
+if (avaliacao.prontoParaEnvio) {
+    banner.style.backgroundColor = "#E8F5E9";
+    banner.style.borderLeft = "4px solid #4CAF50";
+    banner.style.color = "#1B5E20";
+
+    banner.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.1rem;">🩺</span>
+        <span>
+        <strong>e-SUS Lens:</strong> Dados clínicos aptos para solicitar teleconsultoria no <strong>Acesso Saúde CE</strong>.
+        </span>
+    </div>
+    <button id="esus-lens-btn-abrir-acesso" style="background-color: #2E7D32; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 0.8rem; white-space: nowrap;">
+        Solicitar Parecer ➔
+    </button>
+    `;
+} else {
+    banner.style.backgroundColor = "#FFF3CD";
+    banner.style.borderLeft = "4px solid #FFA000";
+    banner.style.color = "#856404";
+
+    const pendenciasTexto = avaliacao.criticosPendentes.map((c) => c.titulo).join(", ");
+
+    banner.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.1rem;">💡</span>
+        <div>
+        <strong>e-SUS Lens (Acesso Saúde CE):</strong> Faltam dados essenciais para teleconsultoria:
+        <span style="color: #d32f2f; font-weight: 500;"> ${pendenciasTexto}</span>.
+        </div>
+    </div>
+    <button id="esus-lens-btn-abrir-acesso" style="background-color: #1351b4; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 0.8rem; white-space: nowrap; margin-left: 12px;">
+        Verificar Pendências ➔
+    </button>
+    `;
+}
+
+// Insere o banner diretamente na interface do PEC, logo abaixo do nome do paciente
+headerAlvo.parentElement.insertAdjacentElement("afterend", banner);
+
+// Evento de clique para abrir a sidebar diretamente na aba correta
+banner.querySelector("#esus-lens-btn-abrir-acesso")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    openSidebarToAcessoSaude();
+});
+}
 
 function waitForPatientNameElement() {
   return new Promise((resolve) => {

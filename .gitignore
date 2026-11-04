@@ -30,3 +30,7 @@ target
 # Segredos (API key do Acesso Saúde CE)
 .env
 extension/scripts/config.js
+
+/extension/node_modules
+package-lock.json
+node_modules/*
