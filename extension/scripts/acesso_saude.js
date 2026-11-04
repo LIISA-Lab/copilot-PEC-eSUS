@@ -50,7 +50,7 @@ const AcessoSaude = (() => {
     // uFRegistro: "CE",
     // estabelecimento: "1234567", // CNES
     // municipioUbs: "Fortaleza", // usado se o município do paciente não for identificado
-    pergunta: "Teste de integração e-SUS PEC Lens: solicitação de teleconsultoria com especialista.",
+    // pergunta: "Teste de integração e-SUS PEC Lens: solicitação de teleconsultoria com especialista.",
   };
 
   let currentPatient = null;
@@ -156,6 +156,88 @@ const AcessoSaude = (() => {
     };
   }
 
+  // ─── Tutelamento Clínico e Validação de Completude (Frente 1) ──────────────
+
+  /**
+   * Avalia a qualidade e completude dos dados capturados do paciente e do atendimento,
+   * gerando diagnósticos com orientações claras para o profissional de saúde.
+   */
+  function avaliarCompletude(patient, emailUbs, especialidade) {
+    const p = patient || {};
+    const end = p.endereco || {};
+    const ev = p.evolucao_pre_natal || {};
+    const session = p.session_info || {};
+
+    const checks = [
+      {
+        id: "identificacao",
+        titulo: "Identificação básica do Cidadão",
+        ok: Boolean(clean(p.name) && clean(p.cpf) && clean(p.mother_name)),
+        detalhe: clean(p.name) && clean(p.cpf)
+          ? `${p.name} (CPF: ${p.cpf})`
+          : "Falta nome, CPF ou nome da mãe. Verifique o cadastro básico do cidadão.",
+        critico: true,
+      },
+      {
+        id: "endereco",
+        titulo: "Endereço e CEP residencial",
+        ok: Boolean(clean(end.cep) && clean(end.bairro) && clean(end.municipio?.nome)),
+        detalhe: clean(end.cep) && clean(end.municipio?.nome)
+          ? `${end.logradouro || "Logradouro"}, ${end.bairro || ""} — CEP: ${end.cep}`
+          : "Endereço incompleto no e-SUS. O teleconsultor precisa do CEP e Bairro do paciente para direcionamento territorial.",
+        critico: true,
+      },
+      {
+        id: "evolucao_soap",
+        titulo: "Registro clínico da consulta (SOAP)",
+        ok: Boolean(clean(ev.subjetivo) || clean(ev.objetivo) || clean(ev.avaliacao)),
+        detalhe: clean(ev.subjetivo) || clean(ev.avaliacao)
+          ? "Dados SOAP identificados no histórico do atendimento."
+          : "Nenhuma evolução clínica registrada ainda. Abra ou preencha a folha de atendimento com Subjetivo/Objetivo para embasar o caso clínico.",
+        critico: true,
+      },
+      {
+        id: "email_ubs",
+        titulo: "E-mail oficial da UBS",
+        ok: Boolean(emailUbs && EMAIL_REGEX.test(emailUbs)),
+        detalhe: emailUbs && EMAIL_REGEX.test(emailUbs)
+          ? `${emailUbs}`
+          : "Informe o e-mail institucional da UBS para recebimento do laudo e retorno.",
+        critico: true,
+      },
+      {
+        id: "especialidade",
+        titulo: "Especialidade médica de destino",
+        ok: Boolean(clean(especialidade)),
+        detalhe: clean(especialidade)
+          ? `Especialidade selecionada: ${especialidade}`
+          : "Selecione para qual especialidade a dúvida deve ser encaminhada.",
+        critico: true,
+      },
+      {
+        id: "obstetrico",
+        titulo: "Contexto obstétrico (DUM / Idade Gestacional)",
+        ok: Boolean(p.ultima_dum || p.idade_gestacional_dias),
+        detalhe: p.ultima_dum || p.idade_gestacional_dias
+          ? `DUM: ${p.ultima_dum || "Sem DUM"} | Idade gestacional registrada`
+          : "Sem DUM ou Idade Gestacional registradas. Importante para o teleconsultor obstétrico.",
+        critico: false,
+      },
+    ];
+
+    const criticosPendentes = checks.filter((c) => c.critico && !c.ok);
+    const avisosPendentes = checks.filter((c) => !c.critico && !c.ok);
+
+    return {
+      checks,
+      prontoParaEnvio: criticosPendentes.length === 0,
+      totalCriticos: checks.filter((c) => c.critico).length,
+      sucessos: checks.filter((c) => c.ok).length,
+      criticosPendentes,
+      avisosPendentes,
+    };
+  }
+
   // ─── Formatação de erros da API ───────────────────────────────────────────
 
   function describeError(result) {
@@ -213,6 +295,22 @@ const AcessoSaude = (() => {
         <h3 style="margin: 0 0 4px 0; color: #1351b4; font-size: 1rem;">🏥 Teleconsultoria — Acesso Saúde CE</h3>
         <p style="margin: 0; font-size: 0.85rem; color: #0D47A1;">Solicite parecer de especialista com os dados do paciente capturados do e-SUS.</p>
       </div>
+
+      <!-- PAINEL DE TUTELAMENTO E COMPLETUDE (FRENTE 1) -->
+      <details class="esus-accordion" id="acesso-tutelamento-details" open>
+        <summary>
+          <span>🎯 Checklist de Envio</span>
+          <span id="acesso-checklist-badge" style="font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; background: #FFF3CD; color: #856404;">Pendente</span>
+        </summary>
+        <div class="acc-content" style="padding: 12px 16px; background-color: #fafafa;">
+          <p style="margin: 0 0 10px 0; font-size: 0.8rem; color: #555;">
+            Para garantir que a solicitação seja aceita e qualificada pelo teleconsultor, certifique-se de que os itens abaixo estão preenchidos:
+          </p>
+          <div id="acesso-checklist-container">
+            <!-- Gerado dinamicamente por renderChecklist -->
+          </div>
+        </div>
+      </details>
 
       <details class="esus-accordion" open>
         <summary>Solicitação</summary>
@@ -324,6 +422,53 @@ const AcessoSaude = (() => {
     }
   }
 
+  function renderChecklist(root) {
+    const container = root.querySelector("#acesso-checklist-container");
+    const badge = root.querySelector("#acesso-checklist-badge");
+    const submitBtn = root.querySelector("#acesso-solicitar");
+    if (!container) return;
+
+    const emailInput = root.querySelector("#acesso-email-ubs");
+    const emailUbs = emailInput ? emailInput.value.trim() : "";
+    const especialidade = root.querySelector("#acesso-especialidade")?.value || "";
+
+    const avaliacao = avaliarCompletude(currentPatient, emailUbs, especialidade);
+
+    // Atualiza badge do topo
+    if (badge) {
+      if (avaliacao.prontoParaEnvio) {
+        badge.style.background = "#E8F5E9";
+        badge.style.color = "#2E7D32";
+        badge.textContent = `Pronto (${avaliacao.sucessos}/${avaliacao.checks.length})`;
+      } else {
+        badge.style.background = "#FFF3CD";
+        badge.style.color = "#856404";
+        badge.textContent = `${avaliacao.criticosPendentes.length} pendência(s)`;
+      }
+    }
+
+    // Renderiza cada item do checklist
+    container.innerHTML = avaliacao.checks
+      .map((item) => {
+        const icon = item.ok ? "✅" : (item.critico ? "❌" : "⚠️");
+        const corBorda = item.ok ? "#4CAF50" : (item.critico ? "#d32f2f" : "#FF9800");
+        const corFundo = item.ok ? "#ffffff" : (item.critico ? "#FFF8F8" : "#FFFDF6");
+
+        return `
+          <div style="border-left: 3px solid ${corBorda}; background: ${corFundo}; padding: 8px 10px; margin-bottom: 6px; border-radius: 4px; font-size: 0.8rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #333;">
+              <span>${icon} ${item.titulo}</span>
+              ${item.critico && !item.ok ? '<span style="color: #d32f2f; font-size: 0.7rem; text-transform: uppercase;">Obrigatório</span>' : ''}
+            </div>
+            <div style="color: #666; font-size: 0.75rem; margin-top: 3px; line-height: 1.3;">
+              ${item.detalhe}
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+  }
+
   function currentPayload(root) {
     const emailInput = root.querySelector("#acesso-email-ubs");
     return buildTeleconsultoriaPayload(
@@ -337,6 +482,7 @@ const AcessoSaude = (() => {
   function refreshPreview(root) {
     const pre = root.querySelector("#acesso-payload-preview");
     if (pre) pre.textContent = JSON.stringify(currentPayload(root), null, 2);
+    renderChecklist(root);
   }
 
   async function submit(root) {
@@ -391,6 +537,7 @@ const AcessoSaude = (() => {
     root.querySelector("#acesso-email-ubs").addEventListener("input", () => refreshPreview(root));
     root.querySelector("#acesso-payload-details").addEventListener("toggle", () => refreshPreview(root));
     refreshPreview(root);
+    renderChecklist(root);
     loadEspecialidades(root);
   }
 
@@ -398,7 +545,10 @@ const AcessoSaude = (() => {
   function setPatient(patient) {
     currentPatient = patient || null;
     const sidebar = document.getElementById("esus-lens-sidebar");
-    if (sidebar) refreshPreview(sidebar);
+    if (sidebar) {
+      refreshPreview(sidebar);
+      renderChecklist(sidebar);
+    }
   }
 
   return { NOT_FOUND, tabHtml, init, setPatient, buildTeleconsultoriaPayload, describeError };
