@@ -89,8 +89,8 @@ function showSidebar(data) {
         `}
     </div>
 
-    <!-- ABA 1: VISÃO GERAL -->
-    <div id="tab-geral" class="esus-tab-content ${isPregnant ? 'active' : ''}">
+    <!-- ABA 1: VISÃO GERAL (Removida a duplicata anterior) -->
+    <div id="tab-geral" class="esus-tab-content ${isPregnant ? 'active' : ''}" style="padding: 16px; background-color: #F8FAFC;">
         <!-- Alerta de Identificação -->
         <div style="background-color: #E8F5E9; padding: 6px 16px; border-radius: 4px; margin-bottom: 16px; display: flex; align-items: center; max-width: 220px;">
             <h3 style="margin: 0; color: #000000ff; font-size: 0.75rem; font-weight: 600;"> <span style="width: 12px; height: 12px; background-color: #4CAF50; border-radius: 50%; display: inline-block; margin-right: 8px;"></span>Gestante em Monitoramento</h3>
@@ -120,20 +120,15 @@ function showSidebar(data) {
             </div>
         </div>
 
-    </div>
-
-    <!-- ABA 1: VISÃO GERAL -->
-    <div id="tab-geral" class="esus-tab-content active">
-
         <!-- Button Group para Geral / Social / Clínico -->
-        <div style="background-color: #E8E8E8; border-radius: 6px; padding: 4px; display: flex; gap: 4px; margin: 16px 16px 16px 16px;">
+        <div style="background-color: #E8E8E8; border-radius: 6px; padding: 4px; display: flex; gap: 4px; margin-bottom: 16px;">
             <button class="esus-btn-group active" data-section="geral" style="flex: 1; padding: 10px; border: none; background-color: #FFFFFF; color: #333; font-weight: 500; font-size: 0.85rem; cursor: pointer; border-radius: 4px; transition: all 0.2s;">Geral</button>
             <button class="esus-btn-group" data-section="social" style="flex: 1; padding: 10px; border: none; background-color: transparent; color: #666; font-weight: 500; font-size: 0.85rem; cursor: pointer; border-radius: 4px; transition: all 0.2s;">Social</button>
             <button class="esus-btn-group" data-section="clinico" style="flex: 1; padding: 10px; border: none; background-color: transparent; color: #666; font-weight: 500; font-size: 0.85rem; cursor: pointer; border-radius: 4px; transition: all 0.2s;">Clínico</button>
         </div>
 
         <!-- Conteúdo dinâmico baseado no button group - FORMATO GRADE -->
-        <div id="section-geral" class="esus-section-content" style="padding: 0 16px; background-color: #FFFFFF; display: block;">
+        <div id="section-geral" class="esus-section-content" style="padding: 0; background-color: #FFFFFF; display: block;">
             <!-- Grid de dados -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 16px;">
                 <!-- Linha 1 -->
@@ -223,7 +218,7 @@ function showSidebar(data) {
             </div>
         </div>
 
-        <div id="section-social" class="esus-section-content" style="display: none; padding: 0 16px;">
+        <div id="section-social" class="esus-section-content" style="display: none; padding: 0;">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 16px;">
                 <!-- Linha 1 -->
                 <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
@@ -308,7 +303,7 @@ function showSidebar(data) {
             </div>
         </div>
 
-        <div id="section-clinico" class="esus-section-content" style="display: none; padding: 0 16px;">
+        <div id="section-clinico" class="esus-section-content" style="display: none; padding: 0;">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 16px;">
                 <!-- Linha 1 -->
                 <div style="border: 1px solid #E0E0E0; border-radius: 4px; padding: 12px; background-color: #FFFFFF;">
@@ -407,18 +402,24 @@ function showSidebar(data) {
         </div>
     </div>
 
-    <!-- ABA 2: SÓCIO-DEMOGRÁFICO -->
-    <div id="tab-socio" class="esus-tab-content">
-        <!-- Conteúdo da aba Sócio-Demográfico -->
+    <!-- ABA 2: SÓCIO-DEMOGRÁFICO (Restaurada com padding) -->
+    <div id="tab-socio" class="esus-tab-content" style="padding: 16px; background-color: #F8FAFC;">
+        <div style="background-color: #FFF3E0; border-left: 4px solid #FF9800; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px;">
+            <p style="margin: 0; font-size: 0.85rem; color: #E65100;">Estes dados são auto-referidos pela paciente durante o Cadastro Individual.</p>
+        </div>
+        <!-- Conteúdo sócio-demográfico -->
     </div>
 
-    <!-- ABA 3: CLÍNICO -->
-    <div id="tab-saude" class="esus-tab-content">
-        <!-- Conteúdo da aba Clínico -->
+    <!-- ABA 3: CONDIÇÕES DE SAÚDE (CLÍNICO) (Restaurada com padding) -->
+    <div id="tab-saude" class="esus-tab-content" style="padding: 16px; background-color: #F8FAFC;">
+        <div style="background-color: #FFF3E0; border-left: 4px solid #FF9800; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px;">
+            <p style="margin: 0; font-size: 0.85rem; color: #E65100;">Estes dados são auto-referidos pela paciente durante o Cadastro Individual.</p>
+        </div>
+        <!-- Conteúdo clínico -->
     </div>
 
     <!-- ABA 4: ACESSO SAÚDE CE (Teleconsultoria) -->
-    <div id="tab-acesso-saude" class="esus-tab-content ${isPregnant ? '' : 'active'}">
+    <div id="tab-acesso-saude" class="esus-tab-content ${isPregnant ? '' : 'active'}" style="padding: 16px; background-color: #F8FAFC;">
         ${AcessoSaude.tabHtml()}
     </div>
   `;
