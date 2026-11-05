@@ -701,6 +701,48 @@ window.addEventListener('esus_graphql_intercepted', (e) => {
     runWasmExtractor(true);
 });
 
+// Monitoramento Contínuo da Troca de Paciente no SPA do e-SUS PEC (Sem precisar de F5)
+let lastObservedPatientName = "";
+
+function setupSpaNavigationObserver() {
+    // 1. Observer no elemento h2 onde fica o nome do paciente no cabeçalho do PEC
+    const domObserver = new MutationObserver(() => {
+        const nameEl = document.querySelector("h2.css-k7p917");
+        const currentName = nameEl ? nameEl.textContent.trim() : "";
+
+        if (currentName && currentName !== lastObservedPatientName) {
+            console.log(`[e-SUS Lens SPA] Nome do paciente mudou de "${lastObservedPatientName}" para "${currentName}". Atualizando extensão...`);
+            lastObservedPatientName = currentName;
+            
+            // Reexecuta o Wasm para capturar os dados do novo paciente diretamente do DOM/GraphQL
+            runWasmExtractor(true);
+        }
+    });
+
+    domObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true
+    });
+
+    // 2. Ouve eventos de troca de rota no SPA disparados pelo inject.js (pushState/popstate)
+    window.addEventListener('esus_route_changed', (e) => {
+        console.log("[e-SUS Lens SPA] Rota do e-SUS mudou:", e.detail?.url);
+        // Aguarda meio segundo para a UI do novo prontuário renderizar
+        setTimeout(() => {
+            const nameEl = document.querySelector("h2.css-k7p917");
+            const currentName = nameEl ? nameEl.textContent.trim() : "";
+            if (currentName && currentName !== lastObservedPatientName) {
+                lastObservedPatientName = currentName;
+                runWasmExtractor(true);
+            }
+        }, 600);
+    });
+}
+
+// Inicializa o monitoramento automático de SPA
+setupSpaNavigationObserver();
+
 // Listener para abrir a sidebar MANUALMENTE quando o ícone da extensão é clicado
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "TOGGLE_SIDEBAR") {
