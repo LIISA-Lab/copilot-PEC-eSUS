@@ -129,6 +129,7 @@ impl PatientDataExtractor for DomPatientExtractor {
             condicoes_saude,
             sociodemografico,
             session_info,
+            is_pregnant: None,
         })
     }
 }

@@ -83,12 +83,21 @@
 
             const cidadao = findCidadao(item.data);
             
-            // 4. Intercepta Dados Extras (Raça/Cor, Telefone, Social, Saúde)
-            // Esses dados vêm na query CidadaoVisualizacao, aninhados no objeto cidadao.
+            // Se identificamos um cidadão na resposta, verificamos se é um NOVO paciente
             if (cidadao) {
-                if (!window.__ESUS_GRAPHQL_DATA__.patient_info) {
+                const currentStoredId = window.__ESUS_GRAPHQL_DATA__.patient_info?.id;
+                const currentStoredCpf = window.__ESUS_GRAPHQL_DATA__.patient_info?.cpf;
+                
+                // Se mudou o ID ou mudou o CPF, limpa os dados do paciente anterior para não mesclar
+                const isDifferentPatient = 
+                    (cidadao.id && currentStoredId && cidadao.id !== currentStoredId) ||
+                    (cidadao.cpf && currentStoredCpf && cidadao.cpf !== currentStoredCpf);
+
+                if (isDifferentPatient || !window.__ESUS_GRAPHQL_DATA__.patient_info) {
+                    console.log("[e-SUS Lens Inject] Novo paciente detectado no PEC! Resetando buffer anterior.");
                     window.__ESUS_GRAPHQL_DATA__.patient_info = {};
                 }
+
                 const p = window.__ESUS_GRAPHQL_DATA__.patient_info;
                 
                 // UUID interno do Cidadão no e-SUS
@@ -272,7 +281,6 @@
                 } else {
                     console.warn("[e-SUS Lens Inject] histAtendimento detectado, mas nenhum texto em subDesc/objDesc/avaDesc/probDesc");
                 }
-            }
             }
         });
 

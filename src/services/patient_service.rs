@@ -25,31 +25,30 @@ impl<E: PatientDataExtractor, R: PatientRepository> PatientService<E, R> {
             let existing_patient = self.repo.get_patient(&k).await?;
 
             // 4. Faz o Merge (Mantém o que já tínhamos + Atualiza o que veio de novo)
-            let merged_patient = match existing_patient {
+            let mut merged_patient = match existing_patient {
                 Some(old_data) => extracted.merge(old_data),
                 None => extracted,
             };
 
-            // 5. Motor de Regras Clínicas (Elegibilidade)
-            // Se a paciente NÃO atende aos critérios gestacionais, nós:
-            // a) Não salvamos/poluímos o banco de dados.
-            // b) Retornamos "None" para o UI, indicando que não há estratificação para ela.
-            if !PregnancyRules::is_pregnant(&merged_patient) {
-                return Ok(None);
+            // 5. Avalia elegibilidade obstétrica
+            let is_pregnant = PregnancyRules::is_pregnant(&merged_patient);
+            merged_patient.is_pregnant = Some(is_pregnant);
+
+            // 6. Política de Persistência:
+            // Apenas pacientes gestantes são salvos/cacheados no IndexedDB para futura sincronização HIE
+            if is_pregnant {
+                self.repo.save_patient(&k, merged_patient.clone()).await?;
             }
 
-            // 6. Sendo elegível (Gestante), salva o resultado mesclado de volta no Banco Local
-            self.repo.save_patient(&k, merged_patient.clone()).await?;
-
+            // Sempre retorna o paciente (gestante ou não) para possibilitar
+            // o tutelamento no Acesso Saúde CE para qualquer cidadão
             Ok(Some(merged_patient))
         } else {
-            // Sem chave primária, não podemos salvar nem buscar histórico.
-            // Validamos apenas o snapshot isolado lido agora.
-            if PregnancyRules::is_pregnant(&extracted) {
-                Ok(Some(extracted))
-            } else {
-                Ok(None)
-            }
+            // Sem chave primária identificada
+            let mut patient = extracted;
+            let is_pregnant = PregnancyRules::is_pregnant(&patient);
+            patient.is_pregnant = Some(is_pregnant);
+            Ok(Some(patient))
         }
     }
 }
