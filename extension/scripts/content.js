@@ -80,16 +80,16 @@ function showSidebar(data) {
     <!-- Navegação em Abas -->
     <div style="display: flex; background: #fff; border-bottom: 1px solid #ccc;">
         ${isPregnant ? `
-          <button class="esus-tab active" data-tab="tab-geral">Visão Geral</button>
-          <button class="esus-tab" data-tab="tab-socio">Sócio-Dem.</button>
-          <button class="esus-tab" data-tab="tab-saude">Clínico</button>
+          <button class="esus-tab active" data-tab="tab-geral">Gestante</button>
+          <button class="esus-tab" data-tab="tab-socio">Avaliação</button>
+          <button class="esus-tab" data-tab="tab-saude">Classificação</button>
           <button class="esus-tab" data-tab="tab-acesso-saude">Acesso Saúde CE</button>
         ` : `
           <button class="esus-tab active" data-tab="tab-acesso-saude" style="color: #1351b4; border-bottom: 3px solid #1351b4; background-color: #F8F9FA;">Acesso Saúde CE (Teleconsultoria)</button>
         `}
     </div>
 
-    <!-- ABA 1: VISÃO GERAL (Removida a duplicata anterior) -->
+    <!-- ABA 1: VISÃO GERAL -->
     <div id="tab-geral" class="esus-tab-content ${isPregnant ? 'active' : ''}" style="padding: 16px; background-color: #F8FAFC;">
         <!-- Alerta de Identificação -->
         <div style="background-color: #E8F5E9; padding: 6px 16px; border-radius: 4px; margin-bottom: 16px; display: flex; align-items: center; max-width: 220px;">
@@ -118,6 +118,13 @@ function showSidebar(data) {
                 </div>
                 <span style="font-size: 14px; font-weight: 200; color: #973C00;">Verifique os dados clínicos e sócio-demográficos antes de qualquer conduta.</span>
             </div>
+        </div>
+
+        <div>
+            <h3 style="margin: 0 8px 0 0; font-size: 0.95rem; font-weight: 600; color: #333; margin-bottom: 4px;">
+                Dados da Paciente
+            </h3>
+                <span style="font-size: 0.75rem; color: #888; display: block; margin-bottom: 16px;">Informações sincronizadas com o prontuário</span>
         </div>
 
         <!-- Button Group para Geral / Social / Clínico -->
