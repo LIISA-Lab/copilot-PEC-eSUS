@@ -1,15 +1,15 @@
 function showSidebar(data) {
-    // Evita duplicar a sidebar caso já exista
-    if (document.getElementById("esus-lens-sidebar")) {
-        // Atualizar dados da sidebar aberta futuramente...
-        return;
-    }
+  const existingSidebar = document.getElementById("esus-lens-sidebar");
+  if (existingSidebar) {
+      // Se já existe e os dados mudaram (ou foram atualizados), removemos a anterior para recriar com o novo paciente
+      existingSidebar.remove();
+  }
 
-    // Tratamento de Elegibilidade (Motor de Regras bloqueou o paciente)
-    if (!data) {
-        alert("e-SUS Lens: Este paciente não possui critérios obstétricos registrados (CIAP/CID ou Cadastro) para iniciar a estratificação de risco.");
-        return;
-    }
+  if (!data) {
+      return;
+  }
+
+  const isPregnant = data.is_pregnant === true;
 
     const sidebar = document.createElement("div");
     sidebar.id = "esus-lens-sidebar";
@@ -79,15 +79,18 @@ function showSidebar(data) {
 
     <!-- Navegação em Abas -->
     <div style="display: flex; background: #fff; border-bottom: 1px solid #ccc;">
-        <button class="esus-tab active" data-tab="tab-geral">Visão Geral</button>
-        <button class="esus-tab" data-tab="tab-socio">Sócio-Dem.</button>
-        <button class="esus-tab" data-tab="tab-saude">Clínico</button>
-        <button class="esus-tab" data-tab="tab-acesso-saude">Acesso Saúde CE</button>
+        ${isPregnant ? `
+          <button class="esus-tab active" data-tab="tab-geral">Visão Geral</button>
+          <button class="esus-tab" data-tab="tab-socio">Sócio-Dem.</button>
+          <button class="esus-tab" data-tab="tab-saude">Clínico</button>
+          <button class="esus-tab" data-tab="tab-acesso-saude">Acesso Saúde CE</button>
+        ` : `
+          <button class="esus-tab active" data-tab="tab-acesso-saude" style="color: #1351b4; border-bottom: 3px solid #1351b4; background-color: #F8F9FA;">Acesso Saúde CE (Teleconsultoria)</button>
+        `}
     </div>
 
-    <!-- Cartão de Classificação (COMPARTILHADO - Visível em 3 abas) -->
-    <div id="esus-card-classificacao" style="background-color: #F8FAFC; padding: 16px; border-bottom: 1px solid #E2E8F0;">
-
+    <!-- ABA 1: VISÃO GERAL -->
+    <div id="tab-geral" class="esus-tab-content ${isPregnant ? 'active' : ''}">
         <!-- Alerta de Identificação -->
         <div style="background-color: #E8F5E9; padding: 6px 16px; border-radius: 4px; margin-bottom: 16px; display: flex; align-items: center; max-width: 220px;">
             <h3 style="margin: 0; color: #000000ff; font-size: 0.75rem; font-weight: 600;"> <span style="width: 12px; height: 12px; background-color: #4CAF50; border-radius: 50%; display: inline-block; margin-right: 8px;"></span>Gestante em Monitoramento</h3>
@@ -414,8 +417,8 @@ function showSidebar(data) {
         <!-- Conteúdo da aba Clínico -->
     </div>
 
-    <!-- ABA 4: ACESSO SAÚDE CE (Sem Cartão de Classificação) -->
-    <div id="tab-acesso-saude" class="esus-tab-content">
+    <!-- ABA 4: ACESSO SAÚDE CE (Teleconsultoria) -->
+    <div id="tab-acesso-saude" class="esus-tab-content ${isPregnant ? '' : 'active'}">
         ${AcessoSaude.tabHtml()}
     </div>
   `;
@@ -670,13 +673,9 @@ async function runWasmExtractor(isSilent = false) {
     try {
         const patientData = await wasm.extract_patient_info_promise();
         
-        // Se patientData for NULL, significa que o Motor de Regras (Rust) barrou o paciente
+        // Se patientData for NULL, não há dados para processar
         if (!patientData) {
-            if (!isSilent) {
-                // Se o usuário CLICOU ativamente na extensão, avisamos o bloqueio.
-                alert("e-SUS Lens: Este paciente não possui critérios obstétricos registrados (CIAP/CID ou Cadastro) para iniciar a estratificação de risco.");
-            }
-            return; // Aborta e a Sidebar continua escondida.
+            return;
         }
         
         console.log("[e-SUS Lens] Dados extraídos e consolidados pelo Rust:", patientData);
@@ -720,11 +719,8 @@ window.addEventListener('esus_graphql_intercepted', (e) => {
     console.log("[e-SUS Lens Content] Recebido sinal do interceptor:", e.detail);
     localStorage.setItem('__ESUS_GRAPHQL_DATA__', JSON.stringify(e.detail));
 
-    // A MÁGICA ZERO-CLICK (Auto-Discovery)
-    if (!isSidebarOpen) {
-        console.log("[e-SUS Lens Content] Acionando Wasm silenciosamente para verificar elegibilidade...");
-        runWasmExtractor(true); // O parâmetro 'true' indica que é uma execução silenciosa
-    }
+    // Executa a extração e atualiza os dados na tela (mesmo que a sidebar já esteja aberta)
+    runWasmExtractor(true);
 });
 
 // Listener para abrir a sidebar MANUALMENTE quando o ícone da extensão é clicado

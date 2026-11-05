@@ -192,6 +192,7 @@ pub struct Patient {
     pub sociodemografico: Option<SocioDemografico>,
 
     pub session_info: Option<SessionInfo>,
+    pub is_pregnant: Option<bool>,
 }
 
 impl Patient {
@@ -226,6 +227,7 @@ impl Patient {
                 (None, None) => None,
             },
             session_info: self.session_info.or(old.session_info),
+            is_pregnant: self.is_pregnant.or(old.is_pregnant),
 
             // Tratamento especial pros módulos aninhados
             condicoes_saude: match (self.condicoes_saude, old.condicoes_saude) {
