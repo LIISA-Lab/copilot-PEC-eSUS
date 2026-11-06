@@ -111,6 +111,13 @@ async function solicitarTeleconsultoria(payload) {
   return acessoFetch("/solicitacoes/teleconsultoria_pec", { method: "POST", body: form });
 }
 
+async function getProntuario(cpf) {
+  if (!cpf) throw new Error("CPF não informado para consulta de prontuário.");
+  // Limpa caracteres não numéricos para garantir formato limpo
+  const cleanCpf = encodeURIComponent(String(cpf).replace(/\D/g, "") || String(cpf).trim());
+  return acessoFetch(`/agendamentos/prontuario/${cleanCpf}`);
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "ACESSO_GET_ESPECIALIDADES") {
     getEspecialidades()
@@ -121,6 +128,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === "ACESSO_SOLICITAR_TELECONSULTORIA") {
     solicitarTeleconsultoria(message.payload)
+      .then((result) => sendResponse(result))
+      .catch((err) => sendResponse({ ok: false, status: 0, error: err.message }));
+    return true; // resposta assíncrona
+  }
+
+  if (message.type === "ACESSO_GET_PRONTUARIO") {
+    getProntuario(message.cpf)
       .then((result) => sendResponse(result))
       .catch((err) => sendResponse({ ok: false, status: 0, error: err.message }));
     return true; // resposta assíncrona
