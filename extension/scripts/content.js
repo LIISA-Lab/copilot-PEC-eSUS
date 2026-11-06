@@ -23,15 +23,94 @@ const AVALIACAO_CRITERIOS = {
             { title: "Prematuridade anterior", badge: "ALTO RISCO", risk: true },
             { title: "Cesariana prévia com incisão clássica/corporal", badge: "ALTO RISCO", risk: true }
         ]
+    },
+    condicoesSociais: {
+        title: "Condições sociais e comportamentais",
+        items: [
+            { title: "Condições de trabalho desfavoráveis (esforço, carga horária, agentes nocivos, estresse)", subtitle: "Assistência social", badge: "AS", risk: false },
+            { title: "Indícios ou ocorrência de violência doméstica ou de gênero", subtitle: "Assistência social", badge: "AS", risk: false },
+            { title: "Situação conjugal insegura", badge: "AS", subtitle: "Assistência social", risk: false },
+            { title: "Insuficiência de apoio familiar", badge: "AS", subtitle: "Assistência social", risk: false },
+            { title: "Capacidade de autocuidado insuficiente", subtitle: "Assistência social", badge: "AS", risk: false },
+            { title: "Não aceitação da gestação", subtitle: "Assistência social", badge: "AS", risk: false },
+            { title: "Baixa escolaridade (<5 anos de estudo)", subtitle: "Assistência social", badge: "AS", risk: false },
+            { title: "Situação de rua, comunidade indígena, quilombola ou migrante", subtitle: "Assistência social", badge: "AS", risk: false },
+            { title: "Gestação resultante de estupro", subtitle: "Assistência social", badge: "AS", risk: false },
+            { title: "Tabagismo (abre Escala de Fagerström)", subtitle: "Assistência social", badge: "AS", risk: false },
+            { title: "Uso de medicamentos teratogênicos", badge: "2pt", risk: false },
+            { title: "Uso de drogas lícitas e ilícitas (sem dependência)", badge: "2pt", risk: false },
+            { title: "Etilismo com indicativo de dependência", badge: "3pt AP", subtitle: "Atenção psicossocial", risk: false },
+            { title: "Dependência e/ou uso abusivo de drogas", badge: "3pt AP", subtitle: "Atenção psicossocial", risk: false },
+            { title: "Agravos alimentares/nutricionais (IMC ≥40, desnutrição, transtornos alimentares)", badge: "AS", subtitle: "Assistência Social", risk: false },
+            { title: "Outras condições de saúde de menor complexidade", badge: "1pt", risk: false },
+        ]
+    },
+    condicoesClinicasPreExistentes: {
+        title: "Condições clínicas pré-existentes",
+        items: [
+            { title: "Depressão e ansiedade leve/moderada", badge: "CC", subtitle: "Cuidado Compartilhado", risk: false },
+            { title: "Asma controlada sem medicação contínua", badge: "CC", subtitle: "Cuidado Compartilhado", risk: false },
+            { title: "Hipotireoidismo subclínico diagnosticado na gestação", badge: "CC", subtitle: "Cuidado Compartilhado", risk: false },
+            { title: "Pneumopatias graves (asma c/ medicação contínua, DPOC, fibrose cística)", badge: "TEp", subtitle: "Teleconsulta em Pneumologia", risk: false },
+            { title: "Nefropatias graves (insuficiência renal, rins policísticos)", badge: "TEn", subtitle: "Teleconsulta em Nefrologia", risk: false },
+            { title: "Endocrinopatias (hipotireoidismo clínico medicado, hipertireoidismo)", badge: "TEc", subtitle: "Teleconsulta em Endocrinologia", risk: false },
+            { title: "Doenças hematológicas (falciforme, PTI, talassemia, coagulopatias)", badge: "TEh", subtitle: "Teleconsulta em Hematologia", risk: false },
+            { title: "Histórico de tromboembolismo", badge: "TEh", subtitle: "Teleconsulta em Hematologia", risk: false },
+            { title: "Doenças neurológicas (epilepsia, AVC, déficits motores graves)", badge: "TEneu", subtitle: "Teleconsulta em Neurologia", risk: false },
+            { title: "Doenças autoimunes (LES, SAAF, artrite reumatoide)", badge: "TEr", subtitle: "Teleconsulta em Reumatologia", risk: false },
+            { title: "Ginecopatias (malformações uterinas, miomas, cirurgia uterina)", badge: "TEg", subtitle: "Teleconsulta em Ginecologia", risk: false },
+            { title: "Neoplasias — suspeita, diagnosticada ou em tratamento", badge: "Onc", subtitle: "Encaminhamento para Oncologia", risk: false },
+            { title: "Transplantada", badge: "ALTO RISCO TRt", subtitle: "Teleconsulta em Transplante", risk: true },
+            { title: "Cirurgia bariátrica", badge: "TEe", subtitle: "Teleconsulta em Endocrinologia", risk: false },
+            { title: "Tuberculose, hanseníase, hepatites, condiloma extenso", badge: "TEi", subtitle: "Teleconsulta em Infectologia", risk: false },
+            { title: "Diagnóstico de HIV/aids prévio", badge: "TEi", subtitle: "Teleconsulta em Infectologia", risk: false },
+            { title: "Transtorno mental grave (psicose, depressão grave)", badge: "TEpsi", subtitle: "Teleconsulta em Psiquiatria", risk: false },
+            { title: "Gestação de homem transexual", badge: "ALTO RISCO", risk: true }
+        ]
+    },  
+    intercorrenciasGestacaoAtual: {
+        title: "Intercorrência da gestação atual",
+        items: [
+            { title: "Gestação gemelar dicoriônica-diamniótica", badge: "3pt", risk: false },
+            { title: "Diabetes gestacional controlada sem medicação", badge: "2pt", risk: false },
+            { title: "Diabetes gestacional com insulina ou repercussão fetal", badge: "ALTO RISCO", risk: true },
+            { title: "Hipertensão gestacional / pré-eclâmpsia sem gravidade", badge: "2pt", risk: false },
+            { title: "Pré-eclâmpsia com sinais de gravidade ou precoce (<34 sem)", badge: "ALTO RISCO", risk: true },
+            { title: "Infecção urinária (até 2) ou 1 pielonefrite", badge: "1pt", risk: false },
+            { title: "ITU de repetição (≥3 ITU baixa ou ≥2 pielonefrites)", badge: "ALTO RISCO", risk: true },
+            { title: "Ganho de peso inadequado", badge: "1pt", risk: false },
+            { title: "Sífilis tratável, toxoplasmose s/ repercussão, herpes simples", badge: "1pt", risk: false },
+            { title: "Sífilis resistente/terciária, toxo c/ repercussão, rubéola, CMV, HIV na gestação", badge: "ALTO RISCO", risk: true },
+            { title: "Suspeita/confirmação de dengue, Zika ou Chikungunya", badge: "1pt", risk: false },
+            { title: "Restrição de crescimento fetal suspeita", badge: "3pt", risk: false },
+            { title: "Restrição de crescimento fetal confirmada", badge: "ALTO RISCO", risk: true },
+            { title: "Feto acima do percentil 90", badge: "3pt", risk: false },
+            { title: "Mola hidatiforme", badge: "ALTO RISCO", risk: true },
+            { title: "Gestação gemelar monocoriônica", badge: "ALTO RISCO", risk: true },
+            { title: "Gestação multifetal (>1 feto)", badge: "ALTO RISCO", risk: true },
+            { title: "Gestação por reprodução assistida", badge: "ALTO RISCO", risk: true },
+            { title: "Malformação fetal ou arritmia cardíaca fetal", badge: "ALTO RISCO", risk: true },
+            { title: "Tromboembolismo na gestação", badge: "ALTO RISCO", risk: true },
+            { title: "Desvios da quantidade de líquido amniótico", badge: "ALTO RISCO", risk: true },
+            { title: "Isoimunização Rh", badge: "ALTO RISCO", risk: true },
+            { title: "Insuficiência istmo-cervical na gestação atual", badge: "ALTO RISCO", risk: true },
+            { title: "Trabalho de parto pré-termo inibido", badge: "ALTO RISCO", risk: true },
+            { title: "Placenta prévia (confirmada após 22 sem)", badge: "ALTO RISCO", risk: true },
+            { title: "Acretismo placentário", badge: "ALTO RISCO", risk: true },
+            { title: "Colestase gestacional", badge: "ALTO RISCO", risk: true },
+            { title: "Patologia clínica que exige obstetra na Policlínica", badge: "ALTO RISCO", risk: true }
+        ]
     }
-};
+}
 
 /**
  * Armazena os itens selecionados pelo usuário
  * Estrutura: { criterio: [{ title, badge }, ...] }
  */
 let userSelectedItems = {
-    historiaReproductiva: []
+    historiaReproductiva: [],
+    condicoesSociais: [],
+    condicoesClinicasPreExistentes: [],
 };
 
 /**
@@ -49,7 +128,7 @@ function renderAvaliacaoAccordions(data) {
             <details class="esus-accordion" style="margin-bottom: 12px;">
                 <summary style="padding: 12px 16px; font-weight: 600; color: #1351b4; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; background: #fafafa; border-bottom: 1px solid transparent;">
                     <div style="flex: 1;">
-                        <div style="font-weight: 600; color: #1351b4;">${criterio.title}</div>
+                        <div style="font-weight: 600; color: #000000ff;">${criterio.title}</div>
                         <div style="font-size: 0.75rem; color: #888; margin-top: 2px;">${selectedCount} de ${totalCount} marcados</div>
                     </div>
                 </summary>
@@ -70,7 +149,7 @@ function renderAvaliacaoAccordions(data) {
                                 <!-- Badge -->
                                 <div style="padding: 4px 8px; border-radius: 3px; font-size: 0.7rem; font-weight: 600; white-space: nowrap; flex-shrink: 0; ${
                                     item.risk 
-                                        ? 'background-color: #c62828; color: #fff;' 
+                                        ? 'background-color: #FEF2F2; color: #c62828;' 
                                         : 'background-color: #E8E8E8; color: #333;'
                                 }">
                                     ${item.badge}
@@ -245,8 +324,8 @@ function showSidebar(data) {
         `}
     </div>
 
-    <!-- ABA 1: VISÃO GERAL -->
-    <div id="tab-geral" class="esus-tab-content ${isPregnant ? 'active' : ''}" style="padding: 16px; background-color: #F8FAFC;">
+    <!-- Header Fixo: Alerta + Cartão de Paciente (Visível em 3 abas) -->
+    <div id="esus-patient-header" style="padding: 16px; background-color: #F8FAFC; border-bottom: 1px solid #E0E0E0; position: sticky; top: 0; z-index: 10;">
         <!-- Alerta de Identificação -->
         <div style="background-color: #E8F5E9; padding: 6px 16px; border-radius: 4px; margin-bottom: 16px; display: flex; align-items: center; max-width: 220px;">
             <h3 style="margin: 0; color: #000000ff; font-size: 0.75rem; font-weight: 600;"> <span style="width: 12px; height: 12px; background-color: #4CAF50; border-radius: 50%; display: inline-block; margin-right: 8px;"></span>Gestante em Monitoramento</h3>
@@ -275,7 +354,10 @@ function showSidebar(data) {
                 <span style="font-size: 14px; font-weight: 200; color: #973C00;">Verifique os dados clínicos e sócio-demográficos antes de qualquer conduta.</span>
             </div>
         </div>
+    </div>
 
+    <!-- ABA 1: VISÃO GERAL -->
+    <div id="tab-geral" class="esus-tab-content ${isPregnant ? 'active' : ''}" style="padding: 16px; background-color: #F8FAFC;">
         <div>
             <h3 style="margin: 0 8px 0 0; font-size: 0.95rem; font-weight: 600; color: #333; margin-bottom: 4px;">
                 Dados da Paciente
@@ -565,8 +647,8 @@ function showSidebar(data) {
         </div>
     </div>
 
-    <!-- ABA 2: SÓCIO-DEMOGRÁFICO (Restaurada com padding) -->
-    <div id="tab-socio" class="esus-tab-content" style="padding: 16px; background-color: #F8FAFC;">
+    <!-- ABA 2: SÓCIO-DEMOGRÁFICO (Sem duplicação de header) -->
+    <div id="tab-socio" class="esus-tab-content" style="padding: 16px; background-color: #F8FAFC; padding-top: 0;">
         <div style="background-color: #FFF3E0; border-left: 4px solid #FF9800; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px;">
             <p style="margin: 0; font-size: 0.85rem; color: #E65100;">Estes dados são auto-referidos pela paciente durante o Cadastro Individual.</p>
         </div>
@@ -577,8 +659,8 @@ function showSidebar(data) {
         </div>
     </div>
 
-    <!-- ABA 3: CONDIÇÕES DE SAÚDE (CLÍNICO) (Restaurada com padding) -->
-    <div id="tab-saude" class="esus-tab-content" style="padding: 16px; background-color: #F8FAFC;">
+    <!-- ABA 3: CONDIÇÕES DE SAÚDE (CLÍNICO) (Sem duplicação de header) -->
+    <div id="tab-saude" class="esus-tab-content" style="padding: 16px; background-color: #F8FAFC; padding-top: 0;">
         <div style="background-color: #FFF3E0; border-left: 4px solid #FF9800; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px;">
             <p style="margin: 0; font-size: 0.85rem; color: #E65100;">Estes dados são auto-referidos pela paciente durante o Cadastro Individual.</p>
         </div>
