@@ -1,3 +1,155 @@
+/**
+ * Dados dos critérios de classificação de risco
+ */
+const AVALIACAO_CRITERIOS = {
+    historiaReproductiva: {
+        title: "História reprodutiva anterior",
+        items: [
+            { title: "Abortos precoces (até 12 sem), até 2 consecutivos", badge: "1pt", risk: false },
+            { title: "Abortamento habitual (>= 3 consecutivos)", badge: "ALTO RISCO", risk: true },
+            { title: "Aborto tardio ou morte perinatal", badge: "ALTO RISCO", risk: true },
+            { title: "Insulficiência istmo-cervical", badge: "S", subtitle: "Sinalizador clínico", risk: false },
+            { title: "Alterações no crescimento intrauterino (RCF, macrossomia)", badge: "S", subtitle: "Sinalizador clínico", risk: false },
+            { title: "Malformação fetal ou doença genética", badge: "S", subtitle: "Sinalizador clínico", risk: false },
+            { title: "Nuliparidade ou multiparidade (≥5 partos)", badge: "1pt", risk: false },
+            { title: "Diabetes gestacional", badge: "2pt", risk: false },
+            { title: "Síndromes hemorrágicas ou hipertensivas sem gravidade", badge: "1pt", risk: false },
+            { title: "Pré-eclâmpsia grave, eclâmpsia ou HELLP", badge: "1pt", subtitle: "Sinalizador clínico", risk: false },
+            { title: "Infertilidade", badge: "1pt", risk: false },
+            { title: "Cesarianas prévias (2 ou mais)", badge: "1pt", risk: false },
+            { title: "Intervalo interpartal <2 anos", badge: "1pt", risk: false },
+            { title: "Isoimunização Rh em gestação anterior", badge: "ALTO RISCO", risk: true },
+            { title: "Acretismo placentário", badge: "ALTO RISCO", risk: true },
+            { title: "Prematuridade anterior", badge: "ALTO RISCO", risk: true },
+            { title: "Cesariana prévia com incisão clássica/corporal", badge: "ALTO RISCO", risk: true }
+        ]
+    }
+};
+
+/**
+ * Armazena os itens selecionados pelo usuário
+ * Estrutura: { criterio: [{ title, badge }, ...] }
+ */
+let userSelectedItems = {
+    historiaReproductiva: []
+};
+
+/**
+ * Renderiza os accordions de avaliação
+ */
+function renderAvaliacaoAccordions(data) {
+    let html = '';
+    
+    Object.keys(AVALIACAO_CRITERIOS).forEach((criterioKey) => {
+        const criterio = AVALIACAO_CRITERIOS[criterioKey];
+        const selectedCount = userSelectedItems[criterioKey]?.length || 0;
+        const totalCount = criterio.items.length;
+
+        html += `
+            <details class="esus-accordion" style="margin-bottom: 12px;">
+                <summary style="padding: 12px 16px; font-weight: 600; color: #1351b4; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; background: #fafafa; border-bottom: 1px solid transparent;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; color: #1351b4;">${criterio.title}</div>
+                        <div style="font-size: 0.75rem; color: #888; margin-top: 2px;">${selectedCount} de ${totalCount} marcados</div>
+                    </div>
+                </summary>
+
+                <div class="esus-accordion-content">
+                    <div style="padding: 16px; background-color: #FFFFFF; border-top: 1px solid #E0E0E0;">
+                        ${criterio.items.map((item, idx) => `
+                            <label class="esus-avaliacao-item" data-criterio="${criterioKey}" data-index="${idx}" style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; padding: 12px; padding-bottom: 16px; border-bottom: 1px solid #F0F0F0; cursor: pointer; border-radius: 4px; transition: background-color 0.2s ease;">
+                                <!-- Checkbox -->
+                                <input type="checkbox" class="esus-avaliacao-checkbox" data-criterio="${criterioKey}" data-index="${idx}" style="margin-top: 4px; cursor: pointer; width: 18px; height: 18px; flex-shrink: 0;">
+
+                                <!-- Conteúdo -->
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 500; color: #333; font-size: 0.9rem;">${item.title}</div>
+                                    ${item.subtitle ? `<div style="font-size: 0.75rem; color: #888; margin-top: 2px;">${item.subtitle}</div>` : ''}
+                                </div>
+
+                                <!-- Badge -->
+                                <div style="padding: 4px 8px; border-radius: 3px; font-size: 0.7rem; font-weight: 600; white-space: nowrap; flex-shrink: 0; ${
+                                    item.risk 
+                                        ? 'background-color: #c62828; color: #fff;' 
+                                        : 'background-color: #E8E8E8; color: #333;'
+                                }">
+                                    ${item.badge}
+                                </div>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+            </details>
+        `;
+    });
+
+    return html;
+}
+
+/**
+ * Inicializa os event listeners dos checkboxes de avaliação
+ */
+function initAvaliacaoCheckboxes(sidebar) {
+    const checkboxes = sidebar.querySelectorAll('.esus-avaliacao-checkbox');
+    const items = sidebar.querySelectorAll('.esus-avaliacao-item');
+    
+    // Evento ao clicar no item inteiro
+    items.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const checkbox = item.querySelector('.esus-avaliacao-checkbox');
+            checkbox.checked = !checkbox.checked;
+            
+            // Dispara o evento change do checkbox
+            checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+    });
+
+    // Evento ao clicar direto no checkbox
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+            const criterio = e.target.getAttribute('data-criterio');
+            const index = parseInt(e.target.getAttribute('data-index'));
+            const item = AVALIACAO_CRITERIOS[criterio].items[index];
+
+            if (e.target.checked) {
+                // Adiciona à seleção
+                userSelectedItems[criterio].push({
+                    title: item.title,
+                    badge: item.badge
+                });
+            } else {
+                // Remove da seleção
+                userSelectedItems[criterio] = userSelectedItems[criterio].filter(
+                    i => i.title !== item.title || i.badge !== item.badge
+                );
+            }
+
+            // Atualiza a contagem no accordion
+            updateAccordionCounter(sidebar, criterio);
+
+            // Log para debug
+            console.log('[e-SUS Lens] Itens selecionados:', userSelectedItems);
+        });
+    });
+}
+
+/**
+ * Atualiza a contagem de itens marcados no accordion
+ */
+function updateAccordionCounter(sidebar, criterio) {
+    const selectedCount = userSelectedItems[criterio]?.length || 0;
+    const totalCount = AVALIACAO_CRITERIOS[criterio].items.length;
+    
+    const summary = sidebar.querySelector(`.esus-accordion summary`);
+    if (summary) {
+        const counterDiv = summary.querySelector('div:first-child > div:nth-child(2)');
+        if (counterDiv) {
+            counterDiv.textContent = `${selectedCount} de ${totalCount} marcados`;
+        }
+    }
+}
+
 function showSidebar(data) {
   const existingSidebar = document.getElementById("esus-lens-sidebar");
   if (existingSidebar) {
@@ -52,11 +204,15 @@ function showSidebar(data) {
         .esus-tab-content.active { display: block; }
 
         .esus-accordion { background: #fff; border: 1px solid #E0E0E0; border-radius: 6px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); overflow: hidden; }
-        .esus-accordion summary { padding: 12px 16px; font-weight: 500; color: #1351b4; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; background: #fafafa; border-bottom: 1px solid transparent; }
+        .esus-accordion summary { padding: 12px 16px; font-weight: 500; color: #1351b4; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; background: #fafafa; border-bottom: 1px solid transparent; transition: all 0.4s ease; }
         .esus-accordion summary::-webkit-details-marker { display: none; }
-        .esus-accordion summary::after { content: "▼"; font-size: 0.8em; color: #888; transition: transform 0.2s;}
+        .esus-accordion summary::after { content: "▼"; font-size: 0.8em; color: #888; transition: transform 0.4s ease; margin-left: 12px; flex-shrink: 0; }
         .esus-accordion[open] summary { border-bottom: 1px solid #eee; }
         .esus-accordion[open] summary::after { transform: rotate(180deg); }
+        
+        .esus-accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.8s ease-in-out, opacity 0.8s ease-in-out, padding 0.4s ease-in-out; opacity: 0; }
+        .esus-accordion[open] .esus-accordion-content { max-height: 2000px; opacity: 1; }
+        
         .acc-content { padding: 16px; font-size: 0.9rem; color: #555; }
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
@@ -414,7 +570,11 @@ function showSidebar(data) {
         <div style="background-color: #FFF3E0; border-left: 4px solid #FF9800; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px;">
             <p style="margin: 0; font-size: 0.85rem; color: #E65100;">Estes dados são auto-referidos pela paciente durante o Cadastro Individual.</p>
         </div>
-        <!-- Conteúdo sócio-demográfico -->
+
+        <!-- NOVO: Acordeões de Avaliação -->
+        <div id="esus-avaliacoes-container" style="margin-top: 16px;">
+            ${renderAvaliacaoAccordions(data)}
+        </div>
     </div>
 
     <!-- ABA 3: CONDIÇÕES DE SAÚDE (CLÍNICO) (Restaurada com padding) -->
@@ -475,6 +635,9 @@ function showSidebar(data) {
             sidebar.querySelector('#section-' + sectionId).style.display = 'block';
         });
     });
+
+    // Inicializa os checkboxes de avaliação
+    initAvaliacaoCheckboxes(sidebar);
 
     // Lógica para empurrar o conteúdo do e-SUS para o lado
     // Lógica para empurrar o conteúdo do e-SUS para o lado
