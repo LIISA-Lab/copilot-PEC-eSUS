@@ -296,6 +296,19 @@ const AcessoSaude = (() => {
         <p style="margin: 0; font-size: 0.85rem; color: #0D47A1;">Solicite parecer de especialista com os dados do paciente capturados do e-SUS.</p>
       </div>
 
+      <!-- HISTÓRICO DE TELEMEDICINA (ACESSO SAÚDE CE) -->
+      <details class="esus-accordion" id="acesso-prontuario-details" open>
+        <summary>
+          <span>📜 Histórico de Telemedicina</span>
+          <span id="acesso-prontuario-badge" style="font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; background: #E3F2FD; color: #1351b4;">Consultando...</span>
+        </summary>
+        <div class="acc-content" style="padding: 12px 16px; background-color: #fafafa;">
+          <div id="acesso-prontuario-container">
+            <p style="margin: 0; font-size: 0.8rem; color: #888;">Aguardando identificação do paciente...</p>
+          </div>
+        </div>
+      </details>
+
       <!-- PAINEL DE TUTELAMENTO E COMPLETUDE (FRENTE 1) -->
       <details class="esus-accordion" id="acesso-tutelamento-details" open>
         <summary>
@@ -401,6 +414,175 @@ const AcessoSaude = (() => {
       populateSelect(select, ESPECIALIDADES_PADRAO);
       hint.className = "acesso-hint warn";
       hint.textContent = `Lista padrão em uso (API: ${response?.error || "nenhuma especialidade retornada"}).`;
+    }
+  }
+
+  function formatUnixTimestampPtBr(timestamp) {
+    if (!timestamp) return "Data não inf.";
+    try {
+      // Converte segundos float (ex: 1793903625.181718) ou milissegundos para Date
+      const ms = timestamp < 1e11 ? timestamp * 1000 : timestamp;
+      const date = new Date(ms);
+      if (isNaN(date.getTime())) return "Data inválida";
+      return date.toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return String(timestamp);
+    }
+  }
+
+  async function loadProntuarioTelemedicina(root, cpf) {
+    const container = root.querySelector("#acesso-prontuario-container");
+    const badge = root.querySelector("#acesso-prontuario-badge");
+    if (!container) return;
+
+    if (!cpf) {
+      if (badge) {
+        badge.style.background = "#EEEEEE";
+        badge.style.color = "#666666";
+        badge.textContent = "Sem CPF";
+      }
+      container.innerHTML = `<p style="margin: 0; font-size: 0.8rem; color: #888;">CPF não identificado para consultar histórico de Telemedicina.</p>`;
+      return;
+    }
+
+    if (badge) {
+      badge.style.background = "#E3F2FD";
+      badge.style.color = "#1351b4";
+      badge.textContent = "Consultando...";
+    }
+    container.innerHTML = `<p style="margin: 0; font-size: 0.8rem; color: #666;">Buscando histórico na plataforma Acesso Saúde CE...</p>`;
+
+    try {
+      const response = await sendMessage({ type: "ACESSO_GET_PRONTUARIO", cpf });
+
+      if (!response?.ok) {
+        if (badge) {
+          badge.style.background = "#FFF3CD";
+          badge.style.color = "#856404";
+          badge.textContent = "Indisponível";
+        }
+        container.innerHTML = `
+          <div style="font-size: 0.8rem; color: #856404;">
+            Não foi possível carregar o histórico de telemedicina (${response?.error || `HTTP ${response?.status}`}).
+          </div>
+        `;
+        return;
+      }
+
+      const body = response.body;
+      const registros = Array.isArray(body)
+        ? body
+        : Array.isArray(body?.registros)
+        ? body.registros
+        : Array.isArray(body?.atendimentos)
+        ? body.atendimentos
+        : Array.isArray(body?.itens)
+        ? body.itens
+        : (body && typeof body === "object" && Object.keys(body).length > 0 ? [body] : []);
+
+      if (registros.length === 0) {
+        if (badge) {
+          badge.style.background = "#E8F5E9";
+          badge.style.color = "#2E7D32";
+          badge.textContent = "0 registros";
+        }
+        container.innerHTML = `
+          <div style="font-size: 0.8rem; color: #2E7D32; background: #E8F5E9; padding: 8px 10px; border-radius: 4px;">
+            Nenhum atendimento ou teleconsultoria prévia localizada para este paciente.
+          </div>
+        `;
+        return;
+      }
+
+      if (badge) {
+        badge.style.background = "#E8F5E9";
+        badge.style.color = "#2E7D32";
+        badge.textContent = `${registros.length} consulta(s)`;
+      }
+
+      // Ordena do mais recente para o mais antigo (último pro primeiro)
+      const registrosOrdenados = [...registros].sort((a, b) => {
+        const timeA = Number(a.data_hora_fim || a.data_hora || a.data || 0);
+        const timeB = Number(b.data_hora_fim || b.data_hora || b.data || 0);
+        return timeB - timeA;
+      });
+
+      container.innerHTML = registrosOrdenados
+        .map((item, idx) => {
+          // Extrai data_hora_fim (ou fallback para data_hora) e converte unix timestamp para pt-BR
+          const rawTimestamp = item.data_hora_fim || item.data_hora || item.data;
+          const dataAtendimento = typeof rawTimestamp === "number"
+            ? formatUnixTimestampPtBr(rawTimestamp)
+            : (rawTimestamp || "Data não inf.");
+
+          // Especialidade (médico -> perfil_medico -> especialidade)
+          const especialidade = item.medico?.perfil_medico?.especialidade
+            || item.especialidade
+            || item.especialidade_nome
+            || "Médico Geral";
+
+          const status = item.status || item.situacao || "Finalizado";
+
+          // Nome completo do Teleconsultor (médico -> nome_completo)
+          const profissional = item.medico?.nome_completo
+            || item.profissional
+            || item.nome_profissional
+            || null;
+
+          // Prontuário / Conduta / Hipótese diagnóstica / Anamnese / Observações
+          const prontuario = item.prontuario || {};
+          const conduta = prontuario.conduct || prontuario.conduta || item.parecer || null;
+          const hipotese = prontuario.diagnosticHypothesis || prontuario.hipotese || null;
+          const anamnese = prontuario.anamnese || null;
+          const observations = prontuario.observations || prontuario.observacoes || null;
+
+          return `
+            <div style="border: 1px solid #E0E0E0; background: #FFFFFF; border-radius: 6px; padding: 10px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <strong style="color: #1351b4; font-size: 0.85rem;">🩺 ${especialidade}</strong>
+                <span style="font-size: 0.7rem; background: #EDE7F6; color: #512DA8; padding: 2px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">${status}</span>
+              </div>
+              <div style="font-size: 0.75rem; color: #555; margin-bottom: 4px; line-height: 1.4;">
+                📅 <strong>Data:</strong> ${dataAtendimento}
+                ${profissional ? `<br>👨‍⚕️ <strong>Profissional:</strong> ${profissional}` : ""}
+              </div>
+              ${anamnese ? `
+                <div style="margin-top: 6px; padding: 5px 8px; background: #F1F8E9; border-left: 3px solid #7CB342; border-radius: 2px; font-size: 0.75rem; color: #33691E; line-height: 1.35;">
+                  <strong>Anamnese:</strong><br>${anamnese.replace(/\n/g, '<br>')}
+                </div>
+              ` : ""}
+              ${observations ? `
+                <div style="margin-top: 6px; padding: 5px 8px; background: #E0F2F1; border-left: 3px solid #00897B; border-radius: 2px; font-size: 0.75rem; color: #004D40; line-height: 1.35;">
+                  <strong>Observações Clínicas:</strong><br>${observations.replace(/\n/g, '<br>')}
+                </div>
+              ` : ""}
+              ${hipotese ? `
+                <div style="margin-top: 6px; padding: 5px 8px; background: #FFF8E1; border-left: 3px solid #FFA000; border-radius: 2px; font-size: 0.75rem; color: #795548; line-height: 1.35;">
+                  <strong>Hipótese Diagnóstica:</strong><br>${hipotese.replace(/\n/g, '<br>')}
+                </div>
+              ` : ""}
+              ${conduta ? `
+                <div style="margin-top: 6px; padding: 6px 8px; background: #F8F9FA; border-left: 3px solid #1351b4; border-radius: 2px; font-size: 0.75rem; color: #333; line-height: 1.35;">
+                  <strong>Conduta do Especialista:</strong><br>${conduta.replace(/\n/g, '<br>')}
+                </div>
+              ` : ""}
+            </div>
+          `;
+        })
+        .join("");
+    } catch (e) {
+      if (badge) {
+        badge.style.background = "#FFEBEE";
+        badge.style.color = "#c62828";
+        badge.textContent = "Erro";
+      }
+      container.innerHTML = `<p style="margin: 0; font-size: 0.8rem; color: #c62828;">Falha ao consultar prontuário: ${e.message}</p>`;
     }
   }
 
@@ -539,15 +721,20 @@ const AcessoSaude = (() => {
     refreshPreview(root);
     renderChecklist(root);
     loadEspecialidades(root);
+    loadProntuarioTelemedicina(root, currentPatient?.cpf);
   }
 
   /** Atualiza o paciente usado no payload (chamado a cada nova extração do Wasm). */
   function setPatient(patient) {
+    const previousCpf = currentPatient?.cpf;
     currentPatient = patient || null;
     const sidebar = document.getElementById("esus-lens-sidebar");
     if (sidebar) {
       refreshPreview(sidebar);
       renderChecklist(sidebar);
+      if (currentPatient?.cpf && currentPatient.cpf !== previousCpf) {
+        loadProntuarioTelemedicina(sidebar, currentPatient.cpf);
+      }
     }
   }
 

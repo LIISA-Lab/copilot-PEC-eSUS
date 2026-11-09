@@ -5,6 +5,27 @@
 (function() {
   const originalFetch = window.fetch;
 
+  // Intercepta History API (pushState e replaceState) para detecção de troca de rota no SPA do e-SUS
+  const dispatchUrlChange = () => {
+    window.dispatchEvent(new CustomEvent('esus_route_changed', { detail: { url: window.location.href } }));
+  };
+
+  const originalPushState = history.pushState;
+  history.pushState = function(...args) {
+    const res = originalPushState.apply(this, args);
+    dispatchUrlChange();
+    return res;
+  };
+
+  const originalReplaceState = history.replaceState;
+  history.replaceState = function(...args) {
+    const res = originalReplaceState.apply(this, args);
+    dispatchUrlChange();
+    return res;
+  };
+
+  window.addEventListener('popstate', dispatchUrlChange);
+
   window.fetch = async function(...args) {
     const response = await originalFetch.apply(this, args);
     const url = typeof args[0] === 'string' ? args[0] : args[0]?.url;
