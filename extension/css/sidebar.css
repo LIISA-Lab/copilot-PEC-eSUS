@@ -137,6 +137,7 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
+.esus-input,
 .esus-select {
   width: 100%;
   padding: 8px 10px;
@@ -145,15 +146,21 @@
   font-size: 0.8rem;
   background-color: #FAFAFA;
   color: #333;
-  cursor: pointer;
   outline: none;
+  box-sizing: border-box;
   transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
 }
 
+.esus-input:focus,
 .esus-select:focus {
   border-color: #1351b4;
   box-shadow: 0 0 0 2px rgba(19, 81, 180, 0.15);
   background-color: #FFFFFF;
+}
+
+.esus-input::placeholder {
+  color: #999;
+  font-style: italic;
 }
 
 

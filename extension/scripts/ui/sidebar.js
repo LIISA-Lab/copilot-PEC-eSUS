@@ -30,7 +30,10 @@ const LensSidebar = (() => {
 
             <!-- ABA 2: SÓCIO-DEMOGRÁFICO (AVALIAÇÃO) -->
             <div id="tab-socio" class="esus-tab-content" style="padding: 16px; background-color: #F8FAFC; padding-top: 0;">
-                <div id="esus-input-risk-container" style="margin-top: 16px;">
+                <div id="esus-sorologias-container" style="margin-top: 16px;">
+                    ${typeof InputRiskDataTemplate !== 'undefined' ? InputRiskDataTemplate.inputSelectCard() : ''}
+                </div>
+                <div id="esus-registro-clinico-container" style="margin-top: 16px;">
                     ${typeof InputRiskDataTemplate !== 'undefined' ? InputRiskDataTemplate.inputCard() : ''}
                 </div>
                 <div style="margin-bottom: 14px;">
