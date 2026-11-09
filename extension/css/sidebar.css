@@ -1,0 +1,130 @@
+/* sidebar.css - Estilos do e-SUS PEC Lens */
+
+#esus-lens-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 400px;
+  height: 100vh;
+  background-color: #FFFFFF;
+  border-left: 1px solid #E0E0E0;
+  z-index: 999999;
+  box-shadow: -4px 0 15px rgba(0, 0, 0, 0.05);
+  font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease-in-out;
+  transform: translateX(0);
+}
+
+.esus-tab {
+  flex: 1;
+  padding: 12px 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.8rem;
+  color: #666;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+}
+
+.esus-tab:hover {
+  background-color: #f1f1f1;
+}
+
+.esus-tab.active {
+  color: #1351b4;
+  border-bottom: 3px solid #1351b4;
+  background-color: #F8F9FA;
+}
+
+.esus-tab-content {
+  display: none;
+  background-color: #FFFFFF;
+  height: calc(100vh - 110px);
+  overflow-y: auto;
+}
+
+.esus-tab-content.active {
+  display: block;
+}
+
+.esus-accordion {
+  background: #fff;
+  border: 1px solid #E0E0E0;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.esus-accordion summary {
+  padding: 12px 16px;
+  font-weight: 500;
+  color: #1351b4;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fafafa;
+  border-bottom: 1px solid transparent;
+  transition: all 0.4s ease;
+}
+
+.esus-accordion summary::-webkit-details-marker {
+  display: none;
+}
+
+.esus-accordion summary::after {
+  content: "▼";
+  font-size: 0.8em;
+  color: #888;
+  transition: transform 0.4s ease;
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.esus-accordion[open] summary {
+  border-bottom: 1px solid #eee;
+}
+
+.esus-accordion[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.esus-accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.8s ease-in-out, opacity 0.8s ease-in-out, padding 0.4s ease-in-out;
+  opacity: 0;
+}
+
+.esus-accordion[open] .esus-accordion-content {
+  max-height: 2000px;
+  opacity: 1;
+}
+
+.acc-content {
+  padding: 16px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.data-label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 2px;
+}
+

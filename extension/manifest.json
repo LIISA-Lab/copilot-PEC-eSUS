@@ -35,9 +35,23 @@
         "*://esustreinamento.saude.ce.gov.br/*",
         "<all_urls>"
       ],
+      "css": [
+        "css/sidebar.css"
+      ],
       "js": [
         "scripts/idb_helper.js",
+        "scripts/domain/risk_criteria.js",
+        "scripts/state/store.js",
+        "scripts/ui/templates/patient_header.js",
+        "scripts/ui/templates/tab_patient_data.js",
+        "scripts/ui/templates/tab_risk_accordion.js",
+        "scripts/ui/reopen_button.js",
         "scripts/acesso_saude.js",
+        "scripts/ui/pec_banner.js",
+        "scripts/ui/sidebar.js",
+        "scripts/core/page_injector.js",
+        "scripts/core/pec_observer.js",
+        "scripts/core/wasm_extractor.js",
         "scripts/content.js"
       ],
       "run_at": "document_idle"
@@ -50,7 +64,10 @@
         "scripts/inject.js",
         "scripts/idb_helper.js"
       ],
-      "matches": ["*://esustreinamento.saude.ce.gov.br/*"]
+      "matches": [
+        "*://esustreinamento.saude.ce.gov.br/*",
+        "<all_urls>"
+      ]
     }
   ]
 }
