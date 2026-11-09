@@ -97,11 +97,13 @@ const AcessoSaude = (() => {
 
     if (!ev) return NOT_FOUND;
 
+    // Concatena dinamicamente os blocos que estiverem presentes
+    // (ex.: aceita Subjetivo + Avaliação, ou todos preenchidos)
     const blocos = [];
-    if (ev.subjetivo) blocos.push(`[Subjetivo]\n${ev.subjetivo}`);
-    if (ev.objetivo) blocos.push(`[Objetivo]\n${ev.objetivo}`);
-    if (ev.avaliacao) blocos.push(`[Avaliação]\n${ev.avaliacao}`);
-    if (ev.problema) blocos.push(`[Problema/Condição]\n${ev.problema}`);
+    if (clean(ev.subjetivo)) blocos.push(`[Subjetivo]\n${clean(ev.subjetivo)}`);
+    if (clean(ev.objetivo)) blocos.push(`[Objetivo]\n${clean(ev.objetivo)}`);
+    if (clean(ev.avaliacao)) blocos.push(`[Avaliação]\n${clean(ev.avaliacao)}`);
+    if (clean(ev.problema)) blocos.push(`[Problema/Condição]\n${clean(ev.problema)}`);
 
     return blocos.length > 0 ? blocos.join("\n\n") : NOT_FOUND;
   }
@@ -190,10 +192,10 @@ const AcessoSaude = (() => {
       {
         id: "evolucao_soap",
         titulo: "Registro clínico da consulta (SOAP)",
-        ok: Boolean(clean(ev.subjetivo) || clean(ev.objetivo) || clean(ev.avaliacao)),
-        detalhe: clean(ev.subjetivo) || clean(ev.avaliacao)
-          ? "Dados SOAP identificados no histórico do atendimento."
-          : "Nenhuma evolução clínica registrada ainda. Abra ou preencha a folha de atendimento com Subjetivo/Objetivo para embasar o caso clínico.",
+        ok: Boolean(clean(ev.subjetivo) || clean(ev.avaliacao) || clean(ev.objetivo) || clean(ev.problema)),
+        detalhe: (clean(ev.subjetivo) || clean(ev.avaliacao))
+          ? `Registro clínico identificado: ${[clean(ev.subjetivo) ? "Subjetivo" : null, clean(ev.objetivo) ? "Objetivo" : null, clean(ev.avaliacao) ? "Avaliação" : null, clean(ev.problema) ? "Problema" : null].filter(Boolean).join(" + ")}.`
+          : "Nenhuma evolução clínica registrada ainda. Preencha ao menos o Subjetivo e/ou a Avaliação para embasar o caso clínico.",
         critico: true,
       },
       {
