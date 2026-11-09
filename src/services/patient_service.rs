@@ -1,4 +1,5 @@
 use crate::domain::patient::Patient;
+use crate::domain::pregnancy_risk::PregnancyRiskEvaluator;
 use crate::domain::pregnancy_rules::PregnancyRules;
 use crate::services::traits::{PatientDataExtractor, PatientRepository};
 
@@ -30,9 +31,16 @@ impl<E: PatientDataExtractor, R: PatientRepository> PatientService<E, R> {
                 None => extracted,
             };
 
-            // 5. Avalia elegibilidade obstétrica
+            // 5. Avalia elegibilidade obstétrica e executa a Estratificação de Risco
             let is_pregnant = PregnancyRules::is_pregnant(&merged_patient);
             merged_patient.is_pregnant = Some(is_pregnant);
+
+            if is_pregnant {
+                let estratificacao = PregnancyRiskEvaluator::avaliar(&merged_patient);
+                merged_patient.estratificacao_risco = Some(estratificacao);
+            } else {
+                merged_patient.estratificacao_risco = None;
+            }
 
             // 6. Política de Persistência:
             // Apenas pacientes gestantes são salvos/cacheados no IndexedDB para futura sincronização HIE
@@ -48,6 +56,9 @@ impl<E: PatientDataExtractor, R: PatientRepository> PatientService<E, R> {
             let mut patient = extracted;
             let is_pregnant = PregnancyRules::is_pregnant(&patient);
             patient.is_pregnant = Some(is_pregnant);
+            if is_pregnant {
+                patient.estratificacao_risco = Some(PregnancyRiskEvaluator::avaliar(&patient));
+            }
             Ok(Some(patient))
         }
     }

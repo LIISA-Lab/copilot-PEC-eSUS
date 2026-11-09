@@ -193,6 +193,7 @@ pub struct Patient {
 
     pub session_info: Option<SessionInfo>,
     pub is_pregnant: Option<bool>,
+    pub estratificacao_risco: Option<super::pregnancy_risk::EstratificacaoRiscoResult>,
 }
 
 impl Patient {
@@ -228,6 +229,7 @@ impl Patient {
             },
             session_info: self.session_info.or(old.session_info),
             is_pregnant: self.is_pregnant.or(old.is_pregnant),
+            estratificacao_risco: self.estratificacao_risco.or(old.estratificacao_risco),
 
             // Tratamento especial pros módulos aninhados
             condicoes_saude: match (self.condicoes_saude, old.condicoes_saude) {

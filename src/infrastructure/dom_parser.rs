@@ -130,6 +130,7 @@ impl PatientDataExtractor for DomPatientExtractor {
             sociodemografico,
             session_info,
             is_pregnant: None,
+            estratificacao_risco: None,
         })
     }
 }

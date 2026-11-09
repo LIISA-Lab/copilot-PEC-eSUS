@@ -149,8 +149,30 @@ function showSidebar(data) {
                     </span>
                 </div>
                 <div>
-                    <strong class="data-label">Status de Risco Clínico</strong>
-                    <span style="color: #9E9E9E; font-style: italic; font-size: 0.85rem;">Aguardando motor de regras...</span>
+                    <strong class="data-label">Status de Risco Clínico (Ministério da Saúde)</strong>
+                    ${(() => {
+                        const est = data.estratificacao_risco;
+                        if (!est) return '<span style="color: #9E9E9E; font-style: italic; font-size: 0.85rem;">Estratificação não aplicável (paciente geral).</span>';
+                        
+                        return `
+                          <div style="margin-top: 6px; padding: 10px; border-radius: 6px; border-left: 4px solid ${est.cor}; background-color: #FAFAFA; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                              <span style="font-weight: 700; color: ${est.cor}; font-size: 0.85rem;">${est.rotulo}</span>
+                            </div>
+                            ${est.fatores && est.fatores.length > 0 ? `
+                              <div style="margin: 6px 0; font-size: 0.75rem; color: #444;">
+                                <strong>Fatores Identificados:</strong>
+                                <ul style="margin: 4px 0 0 0; padding-left: 16px;">
+                                  ${est.fatores.map(f => `<li style="margin-bottom: 2px;"><strong>${f.categoria}:</strong> ${f.descricao}</li>`).join('')}
+                                </ul>
+                              </div>
+                            ` : '<p style="margin: 4px 0; font-size: 0.75rem; color: #2E7D32;">Ausência de fatores de risco clínico ou sociodemográfico registrados.</p>'}
+                            <div style="margin-top: 6px; font-size: 0.72rem; color: #666; line-height: 1.35; border-top: 1px dashed #DDD; padding-top: 5px;">
+                              <strong>Conduta Recomendada:</strong> ${est.conduta_recomendada}
+                            </div>
+                          </div>
+                        `;
+                    })()}
                 </div>
             </div>
         </details>
@@ -598,6 +620,72 @@ function showSidebar(data) {
       e.preventDefault();
       openSidebarToAcessoSaude();
     });
+
+    // ─── Dispara Leitor de Sinais de Alarme com IA Gemini (Assíncrono) ──────
+    checkGeminiRedFlagsAsync(patient, banner);
+  }
+
+  /**
+   * Envia apenas os dados clínicos semânticos para o Gemini avaliar sinais de perigo iminente.
+   * Não bloqueia a tela; se encontrar perigo crítico, atualiza o banner visual imediatamente.
+   */
+  async function checkGeminiRedFlagsAsync(patient, bannerEl) {
+    if (!patient) return;
+    const ev = patient.evolucao_pre_natal;
+    // Se não há texto no SOAP, não há o que o NLP analisar
+    if (!ev || (!ev.subjetivo && !ev.objetivo && !ev.avaliacao)) return;
+
+    try {
+      const soapPayload = {
+        idade: patient.age || null,
+        idadeGestacional: patient.idade_gestacional_dias ? `${Math.floor(patient.idade_gestacional_dias / 7)} semanas` : null,
+        subjetivo: ev.subjetivo || null,
+        objetivo: ev.objetivo || null,
+        avaliacao: ev.avaliacao || null,
+        problema: ev.problema || patient.cod_cipa || null,
+      };
+
+      chrome.runtime.sendMessage({ type: "GEMINI_ANALISAR_RED_FLAGS", payload: soapPayload }, (response) => {
+        if (!response?.ok || !response.data) return;
+        const result = response.data;
+
+        if (result.temAlarme && result.gravidade === "CRITICO") {
+          console.warn("[e-SUS Lens IA] SINAL DE ALARME CRÍTICO DETECTADO PELO GEMINI:", result);
+
+          // Cria card de Alerta de Urgência no banner do PEC
+          const alertaBox = document.createElement("div");
+          alertaBox.id = "esus-lens-ia-alert";
+          alertaBox.style.marginTop = "8px";
+          alertaBox.style.padding = "8px 12px";
+          alertaBox.style.backgroundColor = "#B71C1C";
+          alertaBox.style.color = "#FFFFFF";
+          alertaBox.style.borderRadius = "4px";
+          alertaBox.style.fontWeight = "500";
+          alertaBox.style.fontSize = "0.8rem";
+          alertaBox.style.boxShadow = "0 2px 4px rgba(0,0,0,0.15)";
+
+          const listaAlertas = result.alertas && result.alertas.length > 0
+            ? result.alertas.map(a => `<li><strong>${a.titulo}:</strong> ${a.descricao} <em>(${a.condutaSugerida})</em></li>`).join("")
+            : `<li>${result.resumoClinico || "Sinais premonitórios de urgência obstétrica identificados no texto da consulta."}</li>`;
+
+          alertaBox.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+              <span style="font-size: 1rem;">🚨</span>
+              <strong style="text-transform: uppercase;">Atenção Clínica Crítica (IA Gemini):</strong>
+            </div>
+            <ul style="margin: 0; padding-left: 20px;">
+              ${listaAlertas}
+            </ul>
+          `;
+
+          // Remove alerta anterior se existir e insere no banner
+          document.getElementById("esus-lens-ia-alert")?.remove();
+          bannerEl.appendChild(alertaBox);
+        }
+      });
+    } catch (e) {
+      console.warn("[e-SUS Lens IA] Falha silenciosa ao checar sinais de alarme:", e);
+    }
   }
 
 function waitForPatientNameElement() {
