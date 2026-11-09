@@ -63,7 +63,8 @@
       "resources": [
         "pkg/*",
         "scripts/inject.js",
-        "scripts/idb_helper.js"
+        "scripts/idb_helper.js",
+        "icons/*"
       ],
       "matches": [
         "*://esustreinamento.saude.ce.gov.br/*",

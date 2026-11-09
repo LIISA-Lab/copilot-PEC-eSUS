@@ -43,6 +43,9 @@ const LensSidebar = (() => {
                 <div id="esus-avaliacoes-container" style="margin-top: 16px;">
                     ${RiskAccordionTemplate.render(data)}
                 </div>
+                <div id="esus-urgencias-container" style="margin-top: 16px;">
+                    ${typeof RiskAccordionTemplate !== 'undefined' && RiskAccordionTemplate.renderUrgencias ? RiskAccordionTemplate.renderUrgencias(data) : ''}
+                </div>
             </div>
 
             <!-- ABA 3: CONDIÇÕES DE SAÚDE (CLÍNICO) -->

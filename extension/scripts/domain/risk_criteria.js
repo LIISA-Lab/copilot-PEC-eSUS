@@ -69,7 +69,7 @@ const AVALIACAO_CRITERIOS = {
             { title: "Transtorno mental grave (psicose, depressão grave)", badge: "TEpsi", subtitle: "Teleconsulta em Psiquiatria", risk: false },
             { title: "Gestação de homem transexual", badge: "ALTO RISCO", risk: true }
         ]
-    },  
+    },
     intercorrenciasGestacaoAtual: {
         title: "Intercorrência da gestação atual",
         items: [
@@ -105,8 +105,28 @@ const AVALIACAO_CRITERIOS = {
     }
 };
 
+const SINAIS_URGENCIA = {
+    sinaisUrgencia: {
+        title: "Sinais de Urgência",
+        subtitle: "Sempre disponíveis · marcar dispara orientação imediata",
+        itens: [
+            { title: "Vômitos incoercíveis não responsivos ao tratamento" },
+            { title: "Cefaleia intensa súbita, sinais neurológicos, crise asmática grave, EAP" },
+            { title: "Sinais premonitórios de eclâmpsia (escotomas, cefaleia occipital, epigastralgia)" },
+            { title: "Eclâmpsia / convulsões" },
+            { title: "Hipertermia ≥37,8 °C sem infecção de vias aéreas" },
+            { title: "Suspeita de trombose venosa profunda" },
+            { title: "Suspeita/diagnóstico de abdome agudo" },
+            { title: "Pielonefrite, infecção ovular ou infecção com internação" },
+            { title: "Prurido gestacional / icterícia" },
+            { title: "Hemorragias (DPP, placenta prévia, aborto)" }
+        ]
+    }
+}
+
 const RiskCriteria = {
     getCriterios: () => AVALIACAO_CRITERIOS,
-    getCriterio: (key) => AVALIACAO_CRITERIOS[key]
+    getCriterio: (key) => AVALIACAO_CRITERIOS[key],
+    getSinaisUrgencia: () => SINAIS_URGENCIA
 };
 

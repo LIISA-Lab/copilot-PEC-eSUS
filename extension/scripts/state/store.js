@@ -24,7 +24,8 @@ const LensStore = (() => {
             hbsag: '',
             antiHcv: '',
             vdrl: ''
-        }
+        },
+        userSelectedUrgencias: []
     };
 
     function getPatient() {
@@ -72,6 +73,32 @@ const LensStore = (() => {
         Object.keys(state.userSelectedItems).forEach(key => {
             state.userSelectedItems[key] = [];
         });
+        state.userSelectedUrgencias = [];
+    }
+
+    // --- Gestão de Sinais de Urgência ---
+    function getSelectedUrgencias() {
+        return state.userSelectedUrgencias;
+    }
+
+    function addSelectedUrgencia(item) {
+        if (!state.userSelectedUrgencias.some(i => i.title === item.title)) {
+            state.userSelectedUrgencias.push(item);
+        }
+    }
+
+    function removeSelectedUrgencia(item) {
+        state.userSelectedUrgencias = state.userSelectedUrgencias.filter(
+            i => i.title !== item.title
+        );
+    }
+
+    function resetSelectedUrgencias() {
+        state.userSelectedUrgencias = [];
+    }
+
+    function hasSelectedUrgencias() {
+        return state.userSelectedUrgencias.length > 0;
     }
 
     // --- Gestão de Dados Clínicos (PA, Peso, Hemoglobina, Sorologias) ---
@@ -177,6 +204,11 @@ const LensStore = (() => {
         calculateIMC,
         calculatePAM,
         getClinicalAlerts,
+        getSelectedUrgencias,
+        addSelectedUrgencia,
+        removeSelectedUrgencia,
+        resetSelectedUrgencias,
+        hasSelectedUrgencias,
         // Atalho para compatibilidade direta com referências legadas
         get userSelectedItems() {
             return state.userSelectedItems;

@@ -163,4 +163,85 @@
   font-style: italic;
 }
 
+/* Accordion de Sinais de Urgência */
+.esus-accordion-urgencia {
+  background: #FFFFFF;
+  border: 1px solid #FECDCA;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(180, 35, 24, 0.06);
+  overflow: hidden;
+}
+
+.esus-accordion-urgencia summary {
+  padding: 12px 16px;
+  font-weight: 500;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #FEF3F2;
+  border-bottom: 1px solid transparent;
+  transition: all 0.4s ease;
+}
+
+.esus-accordion-urgencia summary::-webkit-details-marker {
+  display: none;
+}
+
+.esus-accordion-urgencia summary::after {
+  content: "▼";
+  font-size: 0.8em;
+  color: #B42318;
+  transition: transform 0.4s ease;
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.esus-accordion-urgencia[open] summary {
+  border-bottom: 1px solid #FECDCA;
+}
+
+.esus-accordion-urgencia[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.esus-urgencia-icon-container {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  background-color: #FEE4E2;
+  border: 1px solid #FDA29B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.esus-urgencia-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid #FEE4E2;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.esus-urgencia-item:hover {
+  background-color: #FEF3F2;
+}
+
+.esus-urgencia-checkbox {
+  margin-top: 4px;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: #D92D20;
+}
+
 
