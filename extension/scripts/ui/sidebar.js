@@ -13,13 +13,15 @@ const LensSidebar = (() => {
         if (!data) return;
 
         const isPregnant = data.is_pregnant === true;
+        // renderPatientSummaryCard deve ser exibido apenas nas 3 primeiras abas: Gestante, Avaliação e Classificação
+        const initialHeaderVisible = isPregnant; // se gestante, abre em tab-geral (visível); se não, abre em tab-acesso-saude (oculto)
         const sidebar = document.createElement("div");
         sidebar.id = "esus-lens-sidebar";
 
         sidebar.innerHTML = `
             ${PatientHeaderTemplate.renderTopHeader()}
             ${PatientHeaderTemplate.renderTabsNavigation(isPregnant)}
-            ${PatientHeaderTemplate.renderPatientSummaryCard(data)}
+            ${PatientHeaderTemplate.renderPatientSummaryCard(data, initialHeaderVisible)}
 
             <!-- ABA 1: VISÃO GERAL -->
             <div id="tab-geral" class="esus-tab-content ${isPregnant ? 'active' : ''}" style="padding: 16px; background-color: #F8FAFC;">
@@ -28,8 +30,12 @@ const LensSidebar = (() => {
 
             <!-- ABA 2: SÓCIO-DEMOGRÁFICO (AVALIAÇÃO) -->
             <div id="tab-socio" class="esus-tab-content" style="padding: 16px; background-color: #F8FAFC; padding-top: 0;">
-                <div style="background-color: #FFF3E0; border-left: 4px solid #FF9800; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px;">
-                    <p style="margin: 0; font-size: 0.85rem; color: #E65100;">Estes dados são auto-referidos pela paciente durante o Cadastro Individual.</p>
+                <div id="esus-input-risk-container" style="margin-top: 16px;">
+                    ${typeof InputRiskDataTemplate !== 'undefined' ? InputRiskDataTemplate.inputCard() : ''}
+                </div>
+                <div style="margin-bottom: 14px;">
+                    <h3 style="margin: 0; font-size: 0.95rem; font-weight: 600; color: #000000ff;">Avaliação clínica</h3>
+                    <p style="margin: 2px 0 0 0; font-size: 0.75rem; color: #666;">Marque os critérios presentes para apoiar a classificação de risco.</p>
                 </div>
                 <div id="esus-avaliacoes-container" style="margin-top: 16px;">
                     ${RiskAccordionTemplate.render(data)}
@@ -59,22 +65,20 @@ const LensSidebar = (() => {
 
         // Eventos de troca de aba principal
         const tabButtons = sidebar.querySelectorAll('.esus-tab');
-        const tabContents = sidebar.querySelectorAll('.esus-tab-content');
-
         tabButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
-                tabButtons.forEach(b => b.classList.remove('active'));
-                tabContents.forEach(c => c.classList.remove('active'));
-
-                e.target.classList.add('active');
-                const tabId = e.target.getAttribute('data-tab');
-                const targetContent = sidebar.querySelector('#' + tabId);
-                if (targetContent) targetContent.classList.add('active');
+                const tabId = e.currentTarget.getAttribute('data-tab');
+                switchTab(tabId, sidebar);
             });
         });
 
         // Eventos de sub-seções (Geral / Social / Clínico)
         PatientDataTemplate.initButtonGroupEvents(sidebar);
+
+        // Eventos de inputs complementares de risco
+        if (typeof InputRiskDataTemplate !== 'undefined' && InputRiskDataTemplate.initEvents) {
+            InputRiskDataTemplate.initEvents(sidebar);
+        }
 
         // Eventos de checkboxes dos acordeões
         RiskAccordionTemplate.initCheckboxes(sidebar);
@@ -116,6 +120,29 @@ const LensSidebar = (() => {
         LensReopenButton.hide();
     }
 
+    function switchTab(tabId, sidebar) {
+        const el = sidebar || document.getElementById("esus-lens-sidebar");
+        if (!el) return;
+
+        const tabButtons = el.querySelectorAll('.esus-tab');
+        const tabContents = el.querySelectorAll('.esus-tab-content');
+
+        tabButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
+        });
+
+        tabContents.forEach(content => {
+            content.classList.toggle('active', content.id === tabId);
+        });
+
+        // renderPatientSummaryCard deve ser exibido apenas nas 3 primeiras abas: Gestante, Avaliação e Classificação
+        const patientHeader = el.querySelector('#esus-patient-header');
+        if (patientHeader) {
+            const allowedTabs = ['tab-geral', 'tab-socio', 'tab-saude'];
+            patientHeader.style.display = allowedTabs.includes(tabId) ? 'block' : 'none';
+        }
+    }
+
     function toggleSidebar() {
         const sidebar = document.getElementById("esus-lens-sidebar");
         if (!sidebar) return false;
@@ -133,7 +160,8 @@ const LensSidebar = (() => {
         render,
         openSidebar,
         closeSidebar,
-        toggleSidebar
+        toggleSidebar,
+        switchTab
     };
 })();
 

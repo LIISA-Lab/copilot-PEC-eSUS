@@ -43,6 +43,7 @@
         "scripts/domain/risk_criteria.js",
         "scripts/state/store.js",
         "scripts/ui/templates/patient_header.js",
+        "scripts/ui/templates/input_risk_data.js",
         "scripts/ui/templates/tab_patient_data.js",
         "scripts/ui/templates/tab_risk_accordion.js",
         "scripts/ui/reopen_button.js",

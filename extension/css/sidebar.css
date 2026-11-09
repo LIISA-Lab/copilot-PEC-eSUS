@@ -128,3 +128,32 @@
   margin-bottom: 2px;
 }
 
+.esus-input-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E0E0E0;
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.esus-select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #D0D5DD;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  background-color: #FAFAFA;
+  color: #333;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.esus-select:focus {
+  border-color: #1351b4;
+  box-shadow: 0 0 0 2px rgba(19, 81, 180, 0.15);
+  background-color: #FFFFFF;
+}
+
+

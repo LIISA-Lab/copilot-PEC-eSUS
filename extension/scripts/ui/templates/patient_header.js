@@ -41,9 +41,9 @@ const PatientHeaderTemplate = (() => {
         `;
     }
 
-    function renderPatientSummaryCard(data) {
+    function renderPatientSummaryCard(data, isVisible = true) {
         return `
-            <div id="esus-patient-header" style="padding: 16px; background-color: #F8FAFC; border-bottom: 1px solid #E0E0E0; position: sticky; top: 0; z-index: 10;">
+            <div id="esus-patient-header" style="padding: 16px; background-color: #F8FAFC; border-bottom: 1px solid #E0E0E0; position: sticky; top: 0; z-index: 10; display: ${isVisible ? 'block' : 'none'};">
                 <!-- Alerta de Identificação -->
                 <div style="background-color: #E8F5E9; padding: 6px 16px; border-radius: 4px; margin-bottom: 16px; display: flex; align-items: center; max-width: 220px;">
                     <h3 style="margin: 0; color: #000000ff; font-size: 0.75rem; font-weight: 600;">
@@ -52,7 +52,7 @@ const PatientHeaderTemplate = (() => {
                 </div>
 
                 <!-- Cartão de Paciente -->
-                <div style="background-color: #FFFFFF; border: 1px solid #E0E0E0; border-radius: 6px; padding: 12px 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                <div style="background-color: #FFFFFF; border: 1px solid #E0E0E0; border-radius: 6px; padding: 12px 16px; margin-bottom: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
                     <div style="margin-bottom: 8px; display: flex; flex-direction: row; align-items: center;">
                         <h3 style="margin: 0 8px 0 0; font-size: 0.95rem; font-weight: 600; color: #333;">
                             ${data.name || 'Paciente sem identificação'}

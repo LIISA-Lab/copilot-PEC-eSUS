@@ -19,8 +19,12 @@ const PecBanner = (() => {
         LensStore.setSidebarOpen(true);
         isSidebarOpen = true;
 
-        const btnAcesso = sidebar.querySelector('button[data-tab="tab-acesso-saude"]');
-        if (btnAcesso) btnAcesso.click();
+        if (typeof LensSidebar !== "undefined" && LensSidebar.switchTab) {
+            LensSidebar.switchTab('tab-acesso-saude', sidebar);
+        } else {
+            const btnAcesso = sidebar.querySelector('button[data-tab="tab-acesso-saude"]');
+            if (btnAcesso) btnAcesso.click();
+        }
 
         LensReopenButton.hide();
     }

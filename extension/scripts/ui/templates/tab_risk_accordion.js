@@ -26,8 +26,8 @@ const RiskAccordionTemplate = (() => {
                     <div class="esus-accordion-content">
                         <div style="padding: 16px; background-color: #FFFFFF; border-top: 1px solid #E0E0E0;">
                             ${criterio.items.map((item, idx) => {
-                                const isChecked = selectedList.some(i => i.title === item.title);
-                                return `
+                const isChecked = selectedList.some(i => i.title === item.title);
+                return `
                                     <label class="esus-avaliacao-item" data-criterio="${criterioKey}" data-index="${idx}" style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; padding: 12px; padding-bottom: 16px; border-bottom: 1px solid #F0F0F0; cursor: pointer; border-radius: 4px; transition: background-color 0.2s ease;">
                                         <!-- Checkbox -->
                                         <input type="checkbox" class="esus-avaliacao-checkbox" data-criterio="${criterioKey}" data-index="${idx}" ${isChecked ? 'checked' : ''} style="margin-top: 4px; cursor: pointer; width: 18px; height: 18px; flex-shrink: 0;">
@@ -39,16 +39,15 @@ const RiskAccordionTemplate = (() => {
                                         </div>
 
                                         <!-- Badge -->
-                                        <div style="padding: 4px 8px; border-radius: 3px; font-size: 0.7rem; font-weight: 600; white-space: nowrap; flex-shrink: 0; ${
-                                            item.risk 
-                                                ? 'background-color: #FEF2F2; color: #c62828;' 
-                                                : 'background-color: #E8E8E8; color: #333;'
-                                        }">
+                                        <div style="padding: 4px 8px; border-radius: 3px; font-size: 0.7rem; font-weight: 600; white-space: nowrap; flex-shrink: 0; ${item.risk
+                        ? 'background-color: #FEF2F2; color: #c62828;'
+                        : 'background-color: #E8E8E8; color: #333;'
+                    }">
                                             ${item.badge}
                                         </div>
                                     </label>
                                 `;
-                            }).join('')}
+            }).join('')}
                         </div>
                     </div>
                 </details>
