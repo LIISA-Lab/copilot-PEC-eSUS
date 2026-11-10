@@ -4,6 +4,7 @@
   "description": "Build script para extensão Wasm",
   "scripts": {
     "config": "node scripts/build_config.js",
+    "sync": "python3 scripts/sync_hie_batch.py",
     "build": "node scripts/build_config.js && wasm-pack build --target web --out-dir extension/pkg"
   },
   "devDependencies": {

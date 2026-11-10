@@ -35,9 +35,6 @@
       const clonedResponse = response.clone();
       
       clonedResponse.json().then(data => {
-        // Log para diagnóstico em tempo real
-        console.log("[e-SUS Lens Inject] Resposta GraphQL interceptada:", data);
-
         // Inicializa o state global se não existir
         if (!window.__ESUS_GRAPHQL_DATA__) {
             window.__ESUS_GRAPHQL_DATA__ = {};
@@ -270,6 +267,8 @@
                 const subDesc = stripHtml(histAtendimento.evolucaoSubjetivo?.descricao);
                 const objDesc = stripHtml(histAtendimento.evolucaoObjetivo?.descricao);
                 const avaDesc = stripHtml(histAtendimento.evolucaoAvaliacao?.descricao);
+                const atendimentoPecId = histAtendimento.id ? String(histAtendimento.id) : (histAtendimento.atendimento?.id ? String(histAtendimento.atendimento.id) : null);
+                const dataAtendimentoEpoch = histAtendimento.atendimento?.dataCriacaoRegistro || histAtendimento.dataCriacao || null;
 
                 // evolucaoProblema pode ser array ou objeto único
                 let probDesc = null;
@@ -290,12 +289,14 @@
                     }
                 }
 
-                if (subDesc || objDesc || avaDesc || probDesc) {
+                if (subDesc || objDesc || avaDesc || probDesc || atendimentoPecId) {
                     p.evolucao_pre_natal = {
+                        atendimento_id: atendimentoPecId || p.evolucao_pre_natal?.atendimento_id || null,
                         subjetivo: subDesc || p.evolucao_pre_natal?.subjetivo || null,
                         objetivo: objDesc || p.evolucao_pre_natal?.objetivo || null,
                         avaliacao: avaDesc || p.evolucao_pre_natal?.avaliacao || null,
                         problema: probDesc || p.evolucao_pre_natal?.problema || null,
+                        data_atendimento_epoch: dataAtendimentoEpoch || p.evolucao_pre_natal?.data_atendimento_epoch || null,
                     };
                     isUpdated = true;
                     console.log("[e-SUS Lens] Evolução pré-natal capturada com sucesso:", p.evolucao_pre_natal);

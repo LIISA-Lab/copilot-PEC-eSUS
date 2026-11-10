@@ -195,6 +195,42 @@ async function solicitarTeleconsultoria(payload) {
   return acessoFetch("/solicitacoes/teleconsultoria_pec", { method: "POST", body: form });
 }
 
+// ─── HIE Linhas de Cuidado (Sync Batch com API Central) ─────────────────────
+
+function getHieSyncUrl() {
+  const cfg = self.HIE_SYNC_CONFIG || {};
+  return (cfg.apiUrl || "http://localhost:3000").replace(/\/+$/, "");
+}
+
+async function sincronizarLoteHie(batchPayload) {
+  const baseUrl = getHieSyncUrl();
+  const targetUrl = `${baseUrl}/api/v1/sync/batch`;
+  console.log(`[e-SUS Lens HIE] Disparando sincronização em lote para: ${targetUrl}`, batchPayload);
+
+  try {
+    const resp = await fetch(targetUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
+      body: JSON.stringify(batchPayload),
+    });
+
+    const body = await resp.json().catch(() => ({}));
+
+    if (!resp.ok) {
+      throw new Error(`API HIE HTTP ${resp.status}: ${JSON.stringify(body)}`);
+    }
+
+    console.log("[e-SUS Lens HIE] Resposta da sincronização recebida com sucesso:", body);
+    return { ok: true, body };
+  } catch (err) {
+    console.error("[e-SUS Lens HIE] Falha ao sincronizar com a API HIE:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
 async function getProntuario(cpf) {
   if (!cpf) throw new Error("CPF não informado para consulta de prontuário.");
   // Limpa caracteres não numéricos para garantir formato limpo
@@ -226,6 +262,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === "GEMINI_ANALISAR_RED_FLAGS") {
     analisarRedFlagsComGemini(message.payload)
+      .then((result) => sendResponse(result))
+      .catch((err) => sendResponse({ ok: false, error: err.message }));
+    return true; // resposta assíncrona
+  }
+
+  if (message.type === "HIE_SYNC_BATCH") {
+    sincronizarLoteHie(message.payload)
       .then((result) => sendResponse(result))
       .catch((err) => sendResponse({ ok: false, error: err.message }));
     return true; // resposta assíncrona

@@ -89,10 +89,16 @@ function showSidebar(data) {
     <!-- ABA 1: VISÃO GERAL -->
     <div id="tab-geral" class="esus-tab-content ${isPregnant ? 'active' : ''}">
         <!-- Alerta de Identificação -->
-        <div style="background-color: #E8F5E9; border-left: 4px solid #4CAF50; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px;">
-            <h3 style="margin: 0 0 4px 0; color: #2E7D32; font-size: 1rem;">🤰 Paciente em Monitoramento</h3>
-            <p style="margin: 0; font-size: 0.85rem; color: #1B5E20;">Dados interceptados do e-SUS</p>
+        <div style="background-color: #E8F5E9; border-left: 4px solid #4CAF50; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h3 style="margin: 0 0 4px 0; color: #2E7D32; font-size: 1rem;">🤰 Paciente em Monitoramento</h3>
+              <p style="margin: 0; font-size: 0.85rem; color: #1B5E20;">Dados interceptados do e-SUS</p>
+            </div>
+            <button id="esus-lens-btn-sync-hie" title="Sincronizar base local com a API HIE Estadual" style="background-color: #1351b4; color: #fff; border: none; padding: 6px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+              🔄 Sync HIE
+            </button>
         </div>
+        <div id="esus-lens-sync-feedback" style="display: none; margin-bottom: 12px; padding: 8px 12px; border-radius: 4px; font-size: 0.75rem;"></div>
 
         <details class="esus-accordion" open>
             <summary>Identificação Rápida</summary>
@@ -468,6 +474,12 @@ function showSidebar(data) {
       });
   });
 
+  // Botão de Sincronização Manual do IndexedDB com a API HIE
+  const btnSyncHie = sidebar.querySelector("#esus-lens-btn-sync-hie");
+  if (btnSyncHie) {
+      btnSyncHie.addEventListener("click", () => triggerHieBatchSync(sidebar));
+  }
+
     // Lógica para empurrar o conteúdo do e-SUS para o lado
     // Lógica para empurrar o conteúdo do e-SUS para o lado
     document.body.style.transition = "padding-right 0.3s ease-in-out";
@@ -527,6 +539,392 @@ function showSidebar(data) {
   }
 
   // ─── FRENTE 2: EMBED DE TUTELAMENTO NA UI DO PEC (DOM INJECTION) ────────────
+
+  /**
+   * Dispara a sincronização de todos os registros do IndexedDB com a API HIE Estadual
+   */
+  async function triggerHieBatchSync(sidebarRef) {
+    const feedback = sidebarRef.querySelector("#esus-lens-sync-feedback");
+    const btn = sidebarRef.querySelector("#esus-lens-btn-sync-hie");
+    if (!feedback || !window.ESusIdb) return;
+
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "⏳ Sincronizando...";
+    }
+    feedback.style.display = "block";
+    feedback.style.backgroundColor = "#E3F2FD";
+    feedback.style.color = "#0D47A1";
+    feedback.textContent = "Lendo registros locais do IndexedDB...";
+
+    try {
+      const idb = window.ESusIdb || globalThis.ESusIdb;
+      if (!idb) throw new Error("Módulo ESusIdb não inicializado.");
+      const records = await idb.get_all_patients();
+      console.log(`[e-SUS Lens HIE] Registros lidos do IndexedDB (${records.length}):`, records);
+
+      if (!records || records.length === 0) {
+        feedback.style.backgroundColor = "#FFF3CD";
+        feedback.style.color = "#856404";
+        feedback.textContent = "Nenhum paciente armazenado localmente para sincronizar.";
+        if (btn) { btn.disabled = false; btn.textContent = "🔄 Sync HIE"; }
+        return;
+      }
+
+      // Obtém dados da sessão atual interceptados
+      const sessionData = window.__ESUS_GRAPHQL_DATA__?.session_info || {};
+
+      // Tenta mapear o IBGE de Guaramiranga (2305100) ou Fortaleza se vier o ID interno do PEC
+      const resolveIbge = (munObj) => {
+        if (!munObj) return null;
+        const nome = (munObj.nome || "").toUpperCase().trim();
+        if (nome.includes("GUARAMIRANGA")) return "2305100";
+        if (nome.includes("FORTALEZA")) return "2304400";
+        if (nome.includes("SOBRAL")) return "2312908";
+        if (nome.includes("TIANGU")) return "2313401";
+        // Se já for código numérico de 7 dígitos
+        if (munObj.id && /^\d{7}$/.test(String(munObj.id))) return String(munObj.id);
+        return null;
+      };
+
+      // Monta o envelope batch exigido pela API
+      const batchPayload = {
+        origem: {
+          versao_extensao: chrome.runtime.getManifest().version,
+          unidade_cnes: sessionData.health_unit_cnes || "2333740",
+          municipio_ibge: resolveIbge({ nome: sessionData.municipio_nome }) || "2305100",
+          profissional_cpf: sessionData.professional_cpf || "00000000000",
+          profissional_nome: sessionData.professional_name || "Profissional e-SUS",
+          profissional_cbo: sessionData.cbo_name || "Médico",
+          conselho_sigla: sessionData.conselho_classe_sigla || "CRM",
+          conselho_numero: sessionData.numero_conselho_classe || "0000",
+          timestamp_envio: Date.now(),
+        },
+        candidatos: records.map(r => {
+          const p = r.data || {};
+          const end = p.endereco || {};
+          const est = p.estratificacao_risco || {};
+          const ev = p.evolucao_pre_natal || {};
+          // Prioriza o session_info gravado no próprio registro do IndexedDB!
+          const sess = p.session_info || sessionData || {};
+
+          // Linhas de Cuidado identificadas
+          const linhasCuidado = [];
+          
+          // Se for gestante ou tiver dados obstétricos
+          if (p.is_pregnant || p.ultima_dum || p.idade_gestacional_dias || p.condicoes_saude?.gestante) {
+            linhasCuidado.push({
+              linha: "MATERNO_INFANTIL",
+              status: "ATIVA",
+              grau_risco: (est.grau || "HABITUAL").toUpperCase(),
+              rotulo_risco: est.rotulo || "Risco Habitual",
+              cor_risco: est.cor || "#4CAF50",
+              fatores_identificados: est.fatores || [],
+              dados_especificos: {
+                dum: p.ultima_dum || null,
+                idade_gestacional_dias: p.idade_gestacional_dias || null,
+              }
+            });
+          }
+
+          // Se possuir diabetes marcado no cadastro
+          if (p.condicoes_saude?.diabetes) {
+            linhasCuidado.push({
+              linha: "DIABETES",
+              status: "ATIVA",
+              grau_risco: p.is_pregnant ? "ALTO_RISCO" : "POTENCIAL",
+              rotulo_risco: p.is_pregnant ? "DIABETES EM GESTAÇÃO" : "DIABETES TIPO 2",
+              cor_risco: p.is_pregnant ? "#D32F2F" : "#FFA000",
+              fatores_identificados: [{ categoria: "Morbidade", descricao: "Diabetes Mellitus Autorreferido" }],
+              dados_especificos: {}
+            });
+          }
+
+          // Se possuir hipertensão arterial
+          if (p.condicoes_saude?.hipertensao_arterial) {
+            linhasCuidado.push({
+              linha: "HIPERTENSAO",
+              status: "ATIVA",
+              grau_risco: p.is_pregnant ? "ALTO_RISCO" : "POTENCIAL",
+              rotulo_risco: p.is_pregnant ? "HIPERTENSÃO EM GESTAÇÃO" : "HIPERTENSÃO ARTERIAL CRÔNICA",
+              cor_risco: p.is_pregnant ? "#D32F2F" : "#FFA000",
+              fatores_identificados: [{ categoria: "Morbidade", descricao: "Hipertensão Arterial Autorreferida" }],
+              dados_especificos: {}
+            });
+          }
+
+          // Se não caiu em nenhuma linha acima, cria linha geral para não descartar
+          if (linhasCuidado.length === 0) {
+            linhasCuidado.push({
+              linha: "ATENCAO_PRIMARIA",
+              status: "ATIVA",
+              grau_risco: "HABITUAL",
+              rotulo_risco: "Risco Habitual",
+              cor_risco: "#4CAF50",
+              fatores_identificados: [],
+              dados_especificos: {}
+            });
+          }
+
+          return {
+            key: r.key,
+            updated_at: r.updated_at || new Date().toISOString(),
+            cidadao: {
+              cpf: p.cpf || r.key,
+              cns: p.cns || null,
+              nome: p.name || "Cidadão",
+              data_nascimento: p.age || null,
+              sexo: p.sex || "Não inf.",
+              identidade_genero: p.gender_identity || null,
+              nome_mae: p.mother_name || null,
+              telefone_celular: p.telefone_celular || null,
+              raca_cor: p.raca_cor || null,
+              endereco: {
+                cep: end.cep || null,
+                bairro: end.bairro || null,
+                logradouro: [end.tipo_logradouro?.nome, end.logradouro].filter(Boolean).join(" ") || end.logradouro || null,
+                numero: end.numero || null,
+                municipio_nome: end.municipio?.nome || null,
+                municipio_ibge: resolveIbge(end.municipio) || null,
+              },
+              condicoes_saude_base: p.condicoes_saude || {},
+              sociodemografico: p.sociodemografico || {},
+            },
+            linhas_cuidado_identificadas: linhasCuidado,
+            atendimento_atual: {
+              atendimento_pec_id: ev.atendimento_id || null,
+              unidade_nome: sess.health_unit_name || null,
+              profissional_nome: sess.professional_name || null,
+              profissional_cpf: sess.professional_cpf || null,
+              profissional_cbo: sess.cbo_name || null,
+              conselho_sigla: sess.conselho_classe_sigla || null,
+              conselho_numero: sess.numero_conselho_classe || null,
+              cod_ciap_cid: p.cod_cipa || null,
+              subjetivo: ev.subjetivo || null,
+              objetivo: ev.objetivo || null,
+              avaliacao: ev.avaliacao || null,
+              problema: ev.problema || null,
+              data: ev.data_atendimento_epoch || Date.now(),
+            }
+          };
+        })
+      };
+
+      console.log(`[e-SUS Lens HIE] Enviando lote para a API com ${batchPayload.candidatos.length} candidato(s):`, batchPayload);
+
+      try {
+        chrome.runtime.sendMessage({ type: "HIE_SYNC_BATCH", payload: batchPayload }, async (response) => {
+          if (chrome.runtime.lastError) {
+            feedback.style.backgroundColor = "#FFEBEE";
+            feedback.style.color = "#C62828";
+            feedback.textContent = `Falha de comunicação com a extensão: ${chrome.runtime.lastError.message}. Recarregue a página do e-SUS (F5).`;
+            if (btn) { btn.disabled = false; btn.textContent = "🔄 Sync HIE"; }
+            return;
+          }
+
+          if (response?.ok) {
+            const body = response.body;
+            const sucessos = body.processados_sucesso || 0;
+            const erros = body.erros || [];
+
+            if (erros.length > 0) {
+              console.warn("[e-SUS Lens HIE] Alguns registros falharam na API:", erros);
+              feedback.style.backgroundColor = "#FFF3CD";
+              feedback.style.color = "#856404";
+              feedback.textContent = `Sincronizado parcialmente: ${sucessos} com sucesso, ${erros.length} com erro. Verifique o console.`;
+            } else {
+              feedback.style.backgroundColor = "#E8F5E9";
+              feedback.style.color = "#1B5E20";
+              feedback.textContent = `✓ Todos os ${sucessos} paciente(s) do IndexedDB foram sincronizados com sucesso na API HIE!`;
+            }
+
+            // Marca registros sincronizados no IndexedDB local
+            const keys = records.map(r => r.key);
+            const idbRef = window.ESusIdb || globalThis.ESusIdb;
+            if (idbRef) await idbRef.mark_as_synced(keys);
+          } else {
+            feedback.style.backgroundColor = "#FFEBEE";
+            feedback.style.color = "#C62828";
+            feedback.textContent = `Falha na sincronização: ${response?.error || "Serviço da API HIE indisponível em http://localhost:3000"}`;
+          }
+          if (btn) { btn.disabled = false; btn.textContent = "🔄 Sync HIE"; }
+        });
+      } catch (runtimeErr) {
+        feedback.style.backgroundColor = "#FFEBEE";
+        feedback.style.color = "#C62828";
+        feedback.textContent = `A extensão foi recarregada. Por favor, dê F5 nesta página do e-SUS para restabelecer a conexão.`;
+        if (btn) { btn.disabled = false; btn.textContent = "🔄 Sync HIE"; }
+      }
+    } catch (e) {
+      feedback.style.backgroundColor = "#FFEBEE";
+      feedback.style.color = "#C62828";
+      feedback.textContent = `Erro ao sincronizar: ${e.message}. Dê F5 na página.`;
+      if (btn) { btn.disabled = false; btn.textContent = "🔄 Sync HIE"; }
+    }
+  }
+
+  /**
+   * Sincronização Automática Silenciosa (Zero-Click):
+   * Disparada logo após o Wasm extrair e consolidar os dados do paciente atual.
+   */
+  let autoSyncDebounceTimer = null;
+  function autoSyncPatientSilently(patientData) {
+    if (!patientData || !patientData.cpf) return;
+
+    clearTimeout(autoSyncDebounceTimer);
+    autoSyncDebounceTimer = setTimeout(async () => {
+      try {
+        const idb = window.ESusIdb || globalThis.ESusIdb;
+        if (!idb) return;
+
+        // Pega todos os registros pendentes do IndexedDB para enviar em batch
+        const records = await idb.get_all_patients();
+        if (!records || records.length === 0) return;
+
+        // Filtra apenas os que não foram sincronizados ainda ou foram atualizados recentemente
+        const pendingRecords = records.filter(r => r.sync_status !== "SINCRONIZADO");
+        if (pendingRecords.length === 0) return;
+
+        const sessionData = window.__ESUS_GRAPHQL_DATA__?.session_info || {};
+        const resolveIbge = (munObj) => {
+          if (!munObj) return null;
+          const nome = (munObj.nome || "").toUpperCase().trim();
+          if (nome.includes("GUARAMIRANGA")) return "2305100";
+          if (nome.includes("FORTALEZA")) return "2304400";
+          if (nome.includes("SOBRAL")) return "2312908";
+          if (nome.includes("TIANGU")) return "2313401";
+          if (munObj.id && /^\d{7}$/.test(String(munObj.id))) return String(munObj.id);
+          return null;
+        };
+
+        const batchPayload = {
+          origem: {
+            versao_extensao: chrome.runtime.getManifest().version,
+            unidade_cnes: sessionData.health_unit_cnes || "2333740",
+            municipio_ibge: resolveIbge({ nome: sessionData.municipio_nome }) || "2305100",
+            profissional_cpf: sessionData.professional_cpf || "00000000000",
+            profissional_nome: sessionData.professional_name || "Profissional e-SUS",
+            profissional_cbo: sessionData.cbo_name || "Médico",
+            conselho_sigla: sessionData.conselho_classe_sigla || "CRM",
+            conselho_numero: sessionData.numero_conselho_classe || "0000",
+            timestamp_envio: Date.now(),
+          },
+          candidatos: pendingRecords.map(r => {
+            const p = r.data || {};
+            const end = p.endereco || {};
+            const est = p.estratificacao_risco || {};
+            const ev = p.evolucao_pre_natal || {};
+            // Prioriza o session_info gravado no próprio registro do IndexedDB!
+            const sess = p.session_info || sessionData || {};
+
+            const linhasCuidado = [];
+            if (p.is_pregnant || p.ultima_dum || p.idade_gestacional_dias || p.condicoes_saude?.gestante) {
+              linhasCuidado.push({
+                linha: "MATERNO_INFANTIL",
+                status: "ATIVA",
+                grau_risco: (est.grau || "HABITUAL").toUpperCase(),
+                rotulo_risco: est.rotulo || "Risco Habitual",
+                cor_risco: est.cor || "#4CAF50",
+                fatores_identificados: est.fatores || [],
+                dados_especificos: {
+                  dum: p.ultima_dum || null,
+                  idade_gestacional_dias: p.idade_gestacional_dias || null,
+                }
+              });
+            }
+
+            if (p.condicoes_saude?.diabetes) {
+              linhasCuidado.push({
+                linha: "DIABETES",
+                status: "ATIVA",
+                grau_risco: p.is_pregnant ? "ALTO_RISCO" : "POTENCIAL",
+                rotulo_risco: p.is_pregnant ? "DIABETES EM GESTAÇÃO" : "DIABETES TIPO 2",
+                cor_risco: p.is_pregnant ? "#D32F2F" : "#FFA000",
+                fatores_identificados: [{ categoria: "Morbidade", descricao: "Diabetes Mellitus Autorreferido" }],
+                dados_especificos: {}
+              });
+            }
+
+            if (p.condicoes_saude?.hipertensao_arterial) {
+              linhasCuidado.push({
+                linha: "HIPERTENSAO",
+                status: "ATIVA",
+                grau_risco: p.is_pregnant ? "ALTO_RISCO" : "POTENCIAL",
+                rotulo_risco: p.is_pregnant ? "HIPERTENSÃO EM GESTAÇÃO" : "HIPERTENSÃO ARTERIAL CRÔNICA",
+                cor_risco: p.is_pregnant ? "#D32F2F" : "#FFA000",
+                fatores_identificados: [{ categoria: "Morbidade", descricao: "Hipertensão Arterial Autorreferida" }],
+                dados_especificos: {}
+              });
+            }
+
+            if (linhasCuidado.length === 0) {
+              linhasCuidado.push({
+                linha: "ATENCAO_PRIMARIA",
+                status: "ATIVA",
+                grau_risco: "HABITUAL",
+                rotulo_risco: "Risco Habitual",
+                cor_risco: "#4CAF50",
+                fatores_identificados: [],
+                dados_especificos: {}
+              });
+            }
+
+            return {
+              key: r.key,
+              updated_at: r.updated_at || new Date().toISOString(),
+              cidadao: {
+                cpf: p.cpf || r.key,
+                cns: p.cns || null,
+                nome: p.name || "Cidadão",
+                data_nascimento: p.age || null,
+                sexo: p.sex || "Não inf.",
+                identidade_genero: p.gender_identity || null,
+                nome_mae: p.mother_name || null,
+                telefone_celular: p.telefone_celular || null,
+                raca_cor: p.raca_cor || null,
+                endereco: {
+                  cep: end.cep || null,
+                  bairro: end.bairro || null,
+                  logradouro: [end.tipo_logradouro?.nome, end.logradouro].filter(Boolean).join(" ") || end.logradouro || null,
+                  numero: end.numero || null,
+                  municipio_nome: end.municipio?.nome || null,
+                  municipio_ibge: resolveIbge(end.municipio) || null,
+                },
+                condicoes_saude_base: p.condicoes_saude || {},
+                sociodemografico: p.sociodemografico || {},
+              },
+              linhas_cuidado_identificadas: linhasCuidado,
+              atendimento_atual: {
+                atendimento_pec_id: ev.atendimento_id || null,
+                unidade_nome: sess.health_unit_name || null,
+                profissional_nome: sess.professional_name || null,
+                profissional_cpf: sess.professional_cpf || null,
+                profissional_cbo: sess.cbo_name || null,
+                conselho_sigla: sess.conselho_classe_sigla || null,
+                conselho_numero: sess.numero_conselho_classe || null,
+                cod_ciap_cid: p.cod_cipa || null,
+                subjetivo: ev.subjetivo || null,
+                objetivo: ev.objetivo || null,
+                avaliacao: ev.avaliacao || null,
+                problema: ev.problema || null,
+                data: ev.data_atendimento_epoch || Date.now(),
+              }
+            };
+          })
+        };
+
+        chrome.runtime.sendMessage({ type: "HIE_SYNC_BATCH", payload: batchPayload }, async (response) => {
+          if (response?.ok) {
+            console.log(`[e-SUS Lens HIE AutoSync] Sincronização silenciosa concluída (${pendingRecords.length} registros).`);
+            const keys = pendingRecords.map(r => r.key);
+            await idb.mark_as_synced(keys);
+          }
+        });
+      } catch (err) {
+        console.warn("[e-SUS Lens HIE AutoSync] Falha silenciosa no autosync:", err);
+      }
+    }, 1500);
+  }
 
   /**
    * Abre a sidebar posicionando diretamente na aba "Acesso Saúde CE"
@@ -760,6 +1158,9 @@ async function runWasmExtractor(isSilent = false) {
             type: "NOTIFY_PATIENT_DATA",
             payload: patientData
         });
+
+        // 6. AUTO-SYNC ZERO-CLICK: Dispara sincronização silenciosa em background com a API HIE
+        autoSyncPatientSilently(patientData);
     } catch (err) {
         console.error("[e-SUS Lens] O Rust retornou um Erro:", err);
     }
@@ -769,11 +1170,14 @@ async function runWasmExtractor(isSilent = false) {
   }
 }
 
-// Injecta o rastreador de GraphQL na página original (para burlar isolamento de extensão)
 const script = document.createElement('script');
-script.src = chrome.runtime.getURL('scripts/inject.js');
+script.src = chrome.runtime.getURL('scripts/idb_helper.js');
 script.onload = function() {
     this.remove();
+    const injectScript = document.createElement('script');
+    injectScript.src = chrome.runtime.getURL('scripts/inject.js');
+    injectScript.onload = function() { this.remove(); };
+    (document.head || document.documentElement).appendChild(injectScript);
 };
 (document.head || document.documentElement).appendChild(script);
 

@@ -150,19 +150,23 @@ impl Endereco {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct EvolucaoPreNatal {
+    pub atendimento_id: Option<String>,
     pub subjetivo: Option<String>,
     pub objetivo: Option<String>,
     pub avaliacao: Option<String>,
     pub problema: Option<String>,
+    pub data_atendimento_epoch: Option<i64>,
 }
 
 impl EvolucaoPreNatal {
     pub fn merge(self, old: Self) -> Self {
         Self {
+            atendimento_id: self.atendimento_id.or(old.atendimento_id),
             subjetivo: self.subjetivo.or(old.subjetivo),
             objetivo: self.objetivo.or(old.objetivo),
             avaliacao: self.avaliacao.or(old.avaliacao),
             problema: self.problema.or(old.problema),
+            data_atendimento_epoch: self.data_atendimento_epoch.or(old.data_atendimento_epoch),
         }
     }
 }

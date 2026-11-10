@@ -36,6 +36,7 @@ const fileEnv = fs.existsSync(ENV_PATH) ? parseEnv(fs.readFileSync(ENV_PATH, "ut
 const apiUrl = (process.env.ACESSO_SAUDE_API_URL || fileEnv.ACESSO_SAUDE_API_URL || "").replace(/\/+$/, "");
 const apiKey = process.env.ACESSO_SAUDE_API_KEY || fileEnv.ACESSO_SAUDE_API_KEY || "";
 const geminiApiKey = process.env.GEMINI_API_KEY || fileEnv.GEMINI_API_KEY || "";
+const hieSyncUrl = (process.env.HIE_SYNC_API_URL || fileEnv.HIE_SYNC_API_URL || "http://localhost:3000").replace(/\/+$/, "");
 
 const missing = [];
 if (!apiUrl) missing.push("ACESSO_SAUDE_API_URL");
@@ -48,6 +49,7 @@ if (missing.length) {
 const output = `// ARQUIVO GERADO AUTOMATICAMENTE por scripts/build_config.js — NÃO EDITE E NÃO VERSIONE.
 self.ACESSO_SAUDE_CONFIG = ${JSON.stringify({ apiUrl, apiKey }, null, 2)};
 self.GEMINI_CONFIG = ${JSON.stringify({ apiKey: geminiApiKey }, null, 2)};
+self.HIE_SYNC_CONFIG = ${JSON.stringify({ apiUrl: hieSyncUrl }, null, 2)};
 `;
 
 fs.writeFileSync(OUT_PATH, output);
