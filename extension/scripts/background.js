@@ -199,7 +199,7 @@ async function solicitarTeleconsultoria(payload) {
 
 function getHieSyncUrl() {
   const cfg = self.HIE_SYNC_CONFIG || {};
-  return (cfg.apiUrl || "http://localhost:3000").replace(/\/+$/, "");
+  return (cfg.apiUrl || "https://api-hie.ngrok.app").replace(/\/+$/, "");
 }
 
 async function sincronizarLoteHie(batchPayload) {

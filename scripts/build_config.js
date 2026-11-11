@@ -36,7 +36,7 @@ const fileEnv = fs.existsSync(ENV_PATH) ? parseEnv(fs.readFileSync(ENV_PATH, "ut
 const apiUrl = (process.env.ACESSO_SAUDE_API_URL || fileEnv.ACESSO_SAUDE_API_URL || "").replace(/\/+$/, "");
 const apiKey = process.env.ACESSO_SAUDE_API_KEY || fileEnv.ACESSO_SAUDE_API_KEY || "";
 const geminiApiKey = process.env.GEMINI_API_KEY || fileEnv.GEMINI_API_KEY || "";
-const hieSyncUrl = (process.env.HIE_SYNC_API_URL || fileEnv.HIE_SYNC_API_URL || "http://localhost:3000").replace(/\/+$/, "");
+const hieSyncUrl = (process.env.HIE_SYNC_API_URL || fileEnv.HIE_SYNC_API_URL || "https://api-hie.ngrok.app").replace(/\/+$/, "");
 
 const missing = [];
 if (!apiUrl) missing.push("ACESSO_SAUDE_API_URL");
