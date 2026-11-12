@@ -1,12 +1,12 @@
 function showSidebar(data) {
   const existingSidebar = document.getElementById("esus-lens-sidebar");
   if (existingSidebar) {
-      // Se já existe e os dados mudaram (ou foram atualizados), removemos a anterior para recriar com o novo paciente
-      existingSidebar.remove();
+    // Se já existe e os dados mudaram (ou foram atualizados), removemos a anterior para recriar com o novo paciente
+    existingSidebar.remove();
   }
 
   if (!data) {
-      return;
+    return;
   }
 
   const isPregnant = data.is_pregnant === true;
@@ -32,9 +32,9 @@ function showSidebar(data) {
 
   // Layout interno da Sidebar (Header + Content)
   const formatBool = (val, isRisk = false) => {
-      if (val === true) return `<span style="font-weight: 500; color: ${isRisk ? '#c62828' : '#333'};">Sim</span>`;
-      if (val === false) return `<span style="color: #555;">Não</span>`;
-      return `<span style="color: #aaa;">Não inf.</span>`;
+    if (val === true) return `<span style="font-weight: 500; color: ${isRisk ? '#c62828' : '#333'};">Sim</span>`;
+    if (val === false) return `<span style="color: #555;">Não</span>`;
+    return `<span style="color: #aaa;">Não inf.</span>`;
   };
 
   const formatVal = (val) => val ? `<span style="font-weight: 500; color: #333;">${val}</span>` : `<span style="color: #aaa;">Não inf.</span>`;
@@ -94,9 +94,9 @@ function showSidebar(data) {
               <h3 style="margin: 0 0 4px 0; color: #2E7D32; font-size: 1rem;">🤰 Paciente em Monitoramento</h3>
               <p style="margin: 0; font-size: 0.85rem; color: #1B5E20;">Dados interceptados do e-SUS</p>
             </div>
-            <button id="esus-lens-btn-sync-hie" title="Sincronizar base local com a API HIE Estadual" style="background-color: #1351b4; color: #fff; border: none; padding: 6px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+            <!--<button id="esus-lens-btn-sync-hie" title="Sincronizar base local com a API HIE Estadual" style="background-color: #1351b4; color: #fff; border: none; padding: 6px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;">
               🔄 Sync HIE
-            </button>
+            </button>-->
         </div>
         <div id="esus-lens-sync-feedback" style="display: none; margin-bottom: 12px; padding: 8px 12px; border-radius: 4px; font-size: 0.75rem;"></div>
 
@@ -157,10 +157,10 @@ function showSidebar(data) {
                 <div>
                     <strong class="data-label">Status de Risco Clínico (Ministério da Saúde)</strong>
                     ${(() => {
-                        const est = data.estratificacao_risco;
-                        if (!est) return '<span style="color: #9E9E9E; font-style: italic; font-size: 0.85rem;">Estratificação não aplicável (paciente geral).</span>';
-                        
-                        return `
+      const est = data.estratificacao_risco;
+      if (!est) return '<span style="color: #9E9E9E; font-style: italic; font-size: 0.85rem;">Estratificação não aplicável (paciente geral).</span>';
+
+      return `
                           <div style="margin-top: 6px; padding: 10px; border-radius: 6px; border-left: 4px solid ${est.cor}; background-color: #FAFAFA; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                               <span style="font-weight: 700; color: ${est.cor}; font-size: 0.85rem;">${est.rotulo}</span>
@@ -178,7 +178,7 @@ function showSidebar(data) {
                             </div>
                           </div>
                         `;
-                    })()}
+    })()}
                 </div>
             </div>
         </details>
@@ -215,14 +215,14 @@ function showSidebar(data) {
                 <div>
                     <strong class="data-label">Conselho de Classe</strong>
                     ${formatVal(
-                        data.session_info?.conselho_classe_sigla || data.session_info?.numero_conselho_classe
-                            ? [
-                                data.session_info?.conselho_classe_sigla,
-                                data.session_info?.numero_conselho_classe,
-                              ].filter(Boolean).join(' ') +
-                              (data.session_info?.uf_conselho_classe_sigla ? `/${data.session_info.uf_conselho_classe_sigla}` : '')
-                            : null
-                    )}
+      data.session_info?.conselho_classe_sigla || data.session_info?.numero_conselho_classe
+        ? [
+          data.session_info?.conselho_classe_sigla,
+          data.session_info?.numero_conselho_classe,
+        ].filter(Boolean).join(' ') +
+        (data.session_info?.uf_conselho_classe_sigla ? `/${data.session_info.uf_conselho_classe_sigla}` : '')
+        : null
+    )}
                 </div>
             </div>
         </details>
@@ -462,119 +462,330 @@ function showSidebar(data) {
   const tabContents = sidebar.querySelectorAll('.esus-tab-content');
 
   tabButtons.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-          // Remove active de todos
-          tabButtons.forEach(b => b.classList.remove('active'));
-          tabContents.forEach(c => c.classList.remove('active'));
-          
-          // Adiciona active no clicado
-          e.target.classList.add('active');
-          const tabId = e.target.getAttribute('data-tab');
-          sidebar.querySelector('#' + tabId).classList.add('active');
-      });
+    btn.addEventListener('click', (e) => {
+      // Remove active de todos
+      tabButtons.forEach(b => b.classList.remove('active'));
+      tabContents.forEach(c => c.classList.remove('active'));
+
+      // Adiciona active no clicado
+      e.target.classList.add('active');
+      const tabId = e.target.getAttribute('data-tab');
+      sidebar.querySelector('#' + tabId).classList.add('active');
+    });
   });
 
   // Botão de Sincronização Manual do IndexedDB com a API HIE
-  const btnSyncHie = sidebar.querySelector("#esus-lens-btn-sync-hie");
-  if (btnSyncHie) {
-      btnSyncHie.addEventListener("click", () => triggerHieBatchSync(sidebar));
+  // const btnSyncHie = sidebar.querySelector("#esus-lens-btn-sync-hie");
+  // if (btnSyncHie) {
+  //  btnSyncHie.addEventListener("click", () => triggerHieBatchSync(sidebar));
+  // }
+
+  // Lógica para empurrar o conteúdo do e-SUS para o lado
+  // Lógica para empurrar o conteúdo do e-SUS para o lado
+  document.body.style.transition = "padding-right 0.3s ease-in-out";
+  document.body.style.paddingRight = "400px";
+
+  // Marca como aberta no sistema de controle
+  isSidebarOpen = true;
+
+  // Botão fechar (Minimizar)
+  document.getElementById("esus-lens-close").addEventListener("click", () => {
+    sidebar.style.transform = "translateX(400px)";
+    document.body.style.paddingRight = "0";
+    isSidebarOpen = false; // Libera para abrir sozinho de novo se navegar pra outra gestante
+
+    // Adiciona um botão flutuante para reabrir (Miniatura)
+    showReopenButton(sidebar);
+  });
+}
+
+function showReopenButton(sidebarRef) {
+  if (document.getElementById("esus-lens-reopen")) {
+    document.getElementById("esus-lens-reopen").style.display = "flex";
+    return;
   }
 
-    // Lógica para empurrar o conteúdo do e-SUS para o lado
-    // Lógica para empurrar o conteúdo do e-SUS para o lado
-    document.body.style.transition = "padding-right 0.3s ease-in-out";
+  const btn = document.createElement("button");
+  btn.id = "esus-lens-reopen";
+  btn.innerHTML = "🩺 e-SUS Lens";
+  btn.title = "Abrir Painel de Estratificação";
+
+  // Estilo flutuante no canto da tela
+  btn.style.position = "fixed";
+  btn.style.bottom = "24px";
+  btn.style.right = "24px";
+  btn.style.backgroundColor = "#1351b4";
+  btn.style.color = "white";
+  btn.style.border = "none";
+  btn.style.borderRadius = "24px";
+  btn.style.padding = "10px 20px";
+  btn.style.fontSize = "0.9rem";
+  btn.style.fontWeight = "bold";
+  btn.style.boxShadow = "0 4px 6px rgba(0,0,0,0.2)";
+  btn.style.cursor = "pointer";
+  btn.style.zIndex = "999999";
+  btn.style.display = "flex";
+  btn.style.alignItems = "center";
+  btn.style.gap = "8px";
+
+  btn.addEventListener("click", () => {
+    sidebarRef.style.transform = "translateX(0)";
     document.body.style.paddingRight = "400px";
-  
-    // Marca como aberta no sistema de controle
-    isSidebarOpen = true;
+    btn.style.display = "none";
+    isSidebarOpen = true; // Atualiza a flag
+  });
 
-    // Botão fechar (Minimizar)
-    document.getElementById("esus-lens-close").addEventListener("click", () => {
-      sidebar.style.transform = "translateX(400px)";
-      document.body.style.paddingRight = "0";
-      isSidebarOpen = false; // Libera para abrir sozinho de novo se navegar pra outra gestante
-    
-      // Adiciona um botão flutuante para reabrir (Miniatura)
-      showReopenButton(sidebar);
-    });
+  document.body.appendChild(btn);
+}
+
+// ─── FRENTE 2: EMBED DE TUTELAMENTO NA UI DO PEC (DOM INJECTION) ────────────
+
+/**
+ * Dispara a sincronização de todos os registros do IndexedDB com a API HIE Estadual
+ */
+async function triggerHieBatchSync(sidebarRef) {
+  const feedback = sidebarRef.querySelector("#esus-lens-sync-feedback");
+  const btn = sidebarRef.querySelector("#esus-lens-btn-sync-hie");
+  if (!feedback || !window.ESusIdb) return;
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "⏳ Sincronizando...";
   }
+  feedback.style.display = "block";
+  feedback.style.backgroundColor = "#E3F2FD";
+  feedback.style.color = "#0D47A1";
+  feedback.textContent = "Lendo registros locais do IndexedDB...";
 
-  function showReopenButton(sidebarRef) {
-      if (document.getElementById("esus-lens-reopen")) {
-          document.getElementById("esus-lens-reopen").style.display = "flex";
-          return;
-      }
+  try {
+    const idb = window.ESusIdb || globalThis.ESusIdb;
+    if (!idb) throw new Error("Módulo ESusIdb não inicializado.");
+    const records = await idb.get_all_patients();
+    console.log(`[e-SUS Lens HIE] Registros lidos do IndexedDB (${records.length}):`, records);
 
-      const btn = document.createElement("button");
-      btn.id = "esus-lens-reopen";
-      btn.innerHTML = "🩺 e-SUS Lens";
-      btn.title = "Abrir Painel de Estratificação";
-    
-      // Estilo flutuante no canto da tela
-      btn.style.position = "fixed";
-      btn.style.bottom = "24px";
-      btn.style.right = "24px";
-      btn.style.backgroundColor = "#1351b4";
-      btn.style.color = "white";
-      btn.style.border = "none";
-      btn.style.borderRadius = "24px";
-      btn.style.padding = "10px 20px";
-      btn.style.fontSize = "0.9rem";
-      btn.style.fontWeight = "bold";
-      btn.style.boxShadow = "0 4px 6px rgba(0,0,0,0.2)";
-      btn.style.cursor = "pointer";
-      btn.style.zIndex = "999999";
-      btn.style.display = "flex";
-      btn.style.alignItems = "center";
-      btn.style.gap = "8px";
-
-      btn.addEventListener("click", () => {
-          sidebarRef.style.transform = "translateX(0)";
-          document.body.style.paddingRight = "400px";
-          btn.style.display = "none";
-          isSidebarOpen = true; // Atualiza a flag
-      });
-
-      document.body.appendChild(btn);
-  }
-
-  // ─── FRENTE 2: EMBED DE TUTELAMENTO NA UI DO PEC (DOM INJECTION) ────────────
-
-  /**
-   * Dispara a sincronização de todos os registros do IndexedDB com a API HIE Estadual
-   */
-  async function triggerHieBatchSync(sidebarRef) {
-    const feedback = sidebarRef.querySelector("#esus-lens-sync-feedback");
-    const btn = sidebarRef.querySelector("#esus-lens-btn-sync-hie");
-    if (!feedback || !window.ESusIdb) return;
-
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "⏳ Sincronizando...";
+    if (!records || records.length === 0) {
+      feedback.style.backgroundColor = "#FFF3CD";
+      feedback.style.color = "#856404";
+      feedback.textContent = "Nenhum paciente armazenado localmente para sincronizar.";
+      if (btn) { btn.disabled = false; btn.textContent = "🔄 Sync HIE"; }
+      return;
     }
-    feedback.style.display = "block";
-    feedback.style.backgroundColor = "#E3F2FD";
-    feedback.style.color = "#0D47A1";
-    feedback.textContent = "Lendo registros locais do IndexedDB...";
+
+    // Obtém dados da sessão atual interceptados
+    const sessionData = window.__ESUS_GRAPHQL_DATA__?.session_info || {};
+
+    // Tenta mapear o IBGE de Guaramiranga (2305100) ou Fortaleza se vier o ID interno do PEC
+    const resolveIbge = (munObj) => {
+      if (!munObj) return null;
+      const nome = (munObj.nome || "").toUpperCase().trim();
+      if (nome.includes("GUARAMIRANGA")) return "2305100";
+      if (nome.includes("FORTALEZA")) return "2304400";
+      if (nome.includes("SOBRAL")) return "2312908";
+      if (nome.includes("TIANGU")) return "2313401";
+      // Se já for código numérico de 7 dígitos
+      if (munObj.id && /^\d{7}$/.test(String(munObj.id))) return String(munObj.id);
+      return null;
+    };
+
+    // Monta o envelope batch exigido pela API
+    const batchPayload = {
+      origem: {
+        versao_extensao: chrome.runtime.getManifest().version,
+        unidade_cnes: sessionData.health_unit_cnes || "2333740",
+        municipio_ibge: resolveIbge({ nome: sessionData.municipio_nome }) || "2305100",
+        profissional_cpf: sessionData.professional_cpf || "00000000000",
+        profissional_nome: sessionData.professional_name || "Profissional e-SUS",
+        profissional_cbo: sessionData.cbo_name || "Médico",
+        conselho_sigla: sessionData.conselho_classe_sigla || "CRM",
+        conselho_numero: sessionData.numero_conselho_classe || "0000",
+        timestamp_envio: Date.now(),
+      },
+      candidatos: records.map(r => {
+        const p = r.data || {};
+        const end = p.endereco || {};
+        const est = p.estratificacao_risco || {};
+        const ev = p.evolucao_pre_natal || {};
+        // Prioriza o session_info gravado no próprio registro do IndexedDB!
+        const sess = p.session_info || sessionData || {};
+
+        // Linhas de Cuidado identificadas
+        const linhasCuidado = [];
+
+        // Se for gestante ou tiver dados obstétricos
+        if (p.is_pregnant || p.ultima_dum || p.idade_gestacional_dias || p.condicoes_saude?.gestante) {
+          linhasCuidado.push({
+            linha: "MATERNO_INFANTIL",
+            status: "ATIVA",
+            grau_risco: (est.grau || "HABITUAL").toUpperCase(),
+            rotulo_risco: est.rotulo || "Risco Habitual",
+            cor_risco: est.cor || "#4CAF50",
+            fatores_identificados: est.fatores || [],
+            dados_especificos: {
+              dum: p.ultima_dum || null,
+              idade_gestacional_dias: p.idade_gestacional_dias || null,
+            }
+          });
+        }
+
+        // Se possuir diabetes marcado no cadastro
+        if (p.condicoes_saude?.diabetes) {
+          linhasCuidado.push({
+            linha: "DIABETES",
+            status: "ATIVA",
+            grau_risco: p.is_pregnant ? "ALTO_RISCO" : "POTENCIAL",
+            rotulo_risco: p.is_pregnant ? "DIABETES EM GESTAÇÃO" : "DIABETES TIPO 2",
+            cor_risco: p.is_pregnant ? "#D32F2F" : "#FFA000",
+            fatores_identificados: [{ categoria: "Morbidade", descricao: "Diabetes Mellitus Autorreferido" }],
+            dados_especificos: {}
+          });
+        }
+
+        // Se possuir hipertensão arterial
+        if (p.condicoes_saude?.hipertensao_arterial) {
+          linhasCuidado.push({
+            linha: "HIPERTENSAO",
+            status: "ATIVA",
+            grau_risco: p.is_pregnant ? "ALTO_RISCO" : "POTENCIAL",
+            rotulo_risco: p.is_pregnant ? "HIPERTENSÃO EM GESTAÇÃO" : "HIPERTENSÃO ARTERIAL CRÔNICA",
+            cor_risco: p.is_pregnant ? "#D32F2F" : "#FFA000",
+            fatores_identificados: [{ categoria: "Morbidade", descricao: "Hipertensão Arterial Autorreferida" }],
+            dados_especificos: {}
+          });
+        }
+
+        // Se não caiu em nenhuma linha acima, cria linha geral para não descartar
+        if (linhasCuidado.length === 0) {
+          linhasCuidado.push({
+            linha: "ATENCAO_PRIMARIA",
+            status: "ATIVA",
+            grau_risco: "HABITUAL",
+            rotulo_risco: "Risco Habitual",
+            cor_risco: "#4CAF50",
+            fatores_identificados: [],
+            dados_especificos: {}
+          });
+        }
+
+        return {
+          key: r.key,
+          updated_at: r.updated_at || new Date().toISOString(),
+          cidadao: {
+            cpf: p.cpf || r.key,
+            cns: p.cns || null,
+            nome: p.name || "Cidadão",
+            data_nascimento: p.age || null,
+            sexo: p.sex || "Não inf.",
+            identidade_genero: p.gender_identity || null,
+            nome_mae: p.mother_name || null,
+            telefone_celular: p.telefone_celular || null,
+            raca_cor: p.raca_cor || null,
+            endereco: {
+              cep: end.cep || null,
+              bairro: end.bairro || null,
+              logradouro: [end.tipo_logradouro?.nome, end.logradouro].filter(Boolean).join(" ") || end.logradouro || null,
+              numero: end.numero || null,
+              municipio_nome: end.municipio?.nome || null,
+              municipio_ibge: resolveIbge(end.municipio) || null,
+            },
+            condicoes_saude_base: p.condicoes_saude || {},
+            sociodemografico: p.sociodemografico || {},
+          },
+          linhas_cuidado_identificadas: linhasCuidado,
+          atendimento_atual: {
+            atendimento_pec_id: ev.atendimento_id || null,
+            unidade_nome: sess.health_unit_name || null,
+            profissional_nome: sess.professional_name || null,
+            profissional_cpf: sess.professional_cpf || null,
+            profissional_cbo: sess.cbo_name || null,
+            conselho_sigla: sess.conselho_classe_sigla || null,
+            conselho_numero: sess.numero_conselho_classe || null,
+            cod_ciap_cid: p.cod_cipa || null,
+            subjetivo: ev.subjetivo || null,
+            objetivo: ev.objetivo || null,
+            avaliacao: ev.avaliacao || null,
+            problema: ev.problema || null,
+            data: ev.data_atendimento_epoch || Date.now(),
+          }
+        };
+      })
+    };
+
+    console.log(`[e-SUS Lens HIE] Enviando lote para a API com ${batchPayload.candidatos.length} candidato(s):`, batchPayload);
 
     try {
-      const idb = window.ESusIdb || globalThis.ESusIdb;
-      if (!idb) throw new Error("Módulo ESusIdb não inicializado.");
-      const records = await idb.get_all_patients();
-      console.log(`[e-SUS Lens HIE] Registros lidos do IndexedDB (${records.length}):`, records);
+      chrome.runtime.sendMessage({ type: "HIE_SYNC_BATCH", payload: batchPayload }, async (response) => {
+        if (chrome.runtime.lastError) {
+          feedback.style.backgroundColor = "#FFEBEE";
+          feedback.style.color = "#C62828";
+          feedback.textContent = `Falha de comunicação com a extensão: ${chrome.runtime.lastError.message}. Recarregue a página do e-SUS (F5).`;
+          if (btn) { btn.disabled = false; btn.textContent = "🔄 Sync HIE"; }
+          return;
+        }
 
-      if (!records || records.length === 0) {
-        feedback.style.backgroundColor = "#FFF3CD";
-        feedback.style.color = "#856404";
-        feedback.textContent = "Nenhum paciente armazenado localmente para sincronizar.";
+        if (response?.ok) {
+          const body = response.body;
+          const sucessos = body.processados_sucesso || 0;
+          const erros = body.erros || [];
+
+          if (erros.length > 0) {
+            console.warn("[e-SUS Lens HIE] Alguns registros falharam na API:", erros);
+            feedback.style.backgroundColor = "#FFF3CD";
+            feedback.style.color = "#856404";
+            feedback.textContent = `Sincronizado parcialmente: ${sucessos} com sucesso, ${erros.length} com erro. Verifique o console.`;
+          } else {
+            feedback.style.backgroundColor = "#E8F5E9";
+            feedback.style.color = "#1B5E20";
+            feedback.textContent = `✓ Todos os ${sucessos} paciente(s) do IndexedDB foram sincronizados com sucesso na API HIE!`;
+          }
+
+          // Marca registros sincronizados no IndexedDB local
+          const keys = records.map(r => r.key);
+          const idbRef = window.ESusIdb || globalThis.ESusIdb;
+          if (idbRef) await idbRef.mark_as_synced(keys);
+        } else {
+          feedback.style.backgroundColor = "#FFEBEE";
+          feedback.style.color = "#C62828";
+          feedback.textContent = `Falha na sincronização: ${response?.error || "Serviço da API HIE indisponível em http://localhost:3000"}`;
+        }
         if (btn) { btn.disabled = false; btn.textContent = "🔄 Sync HIE"; }
-        return;
-      }
+      });
+    } catch (runtimeErr) {
+      feedback.style.backgroundColor = "#FFEBEE";
+      feedback.style.color = "#C62828";
+      feedback.textContent = `A extensão foi recarregada. Por favor, dê F5 nesta página do e-SUS para restabelecer a conexão.`;
+      if (btn) { btn.disabled = false; btn.textContent = "🔄 Sync HIE"; }
+    }
+  } catch (e) {
+    feedback.style.backgroundColor = "#FFEBEE";
+    feedback.style.color = "#C62828";
+    feedback.textContent = `Erro ao sincronizar: ${e.message}. Dê F5 na página.`;
+    if (btn) { btn.disabled = false; btn.textContent = "🔄 Sync HIE"; }
+  }
+}
 
-      // Obtém dados da sessão atual interceptados
+/**
+ * Sincronização Automática Silenciosa (Zero-Click):
+ * Disparada logo após o Wasm extrair e consolidar os dados do paciente atual.
+ */
+let autoSyncDebounceTimer = null;
+function autoSyncPatientSilently(patientData) {
+  if (!patientData || !patientData.cpf) return;
+
+  clearTimeout(autoSyncDebounceTimer);
+  autoSyncDebounceTimer = setTimeout(async () => {
+    try {
+      const idb = window.ESusIdb || globalThis.ESusIdb;
+      if (!idb) return;
+
+      // Pega todos os registros pendentes do IndexedDB para enviar em batch
+      const records = await idb.get_all_patients();
+      if (!records || records.length === 0) return;
+
+      // Filtra apenas os que não foram sincronizados ainda ou foram atualizados recentemente
+      const pendingRecords = records.filter(r => r.sync_status !== "SINCRONIZADO");
+      if (pendingRecords.length === 0) return;
+
       const sessionData = window.__ESUS_GRAPHQL_DATA__?.session_info || {};
-
-      // Tenta mapear o IBGE de Guaramiranga (2305100) ou Fortaleza se vier o ID interno do PEC
       const resolveIbge = (munObj) => {
         if (!munObj) return null;
         const nome = (munObj.nome || "").toUpperCase().trim();
@@ -582,12 +793,10 @@ function showSidebar(data) {
         if (nome.includes("FORTALEZA")) return "2304400";
         if (nome.includes("SOBRAL")) return "2312908";
         if (nome.includes("TIANGU")) return "2313401";
-        // Se já for código numérico de 7 dígitos
         if (munObj.id && /^\d{7}$/.test(String(munObj.id))) return String(munObj.id);
         return null;
       };
 
-      // Monta o envelope batch exigido pela API
       const batchPayload = {
         origem: {
           versao_extensao: chrome.runtime.getManifest().version,
@@ -600,7 +809,7 @@ function showSidebar(data) {
           conselho_numero: sessionData.numero_conselho_classe || "0000",
           timestamp_envio: Date.now(),
         },
-        candidatos: records.map(r => {
+        candidatos: pendingRecords.map(r => {
           const p = r.data || {};
           const end = p.endereco || {};
           const est = p.estratificacao_risco || {};
@@ -608,10 +817,7 @@ function showSidebar(data) {
           // Prioriza o session_info gravado no próprio registro do IndexedDB!
           const sess = p.session_info || sessionData || {};
 
-          // Linhas de Cuidado identificadas
           const linhasCuidado = [];
-          
-          // Se for gestante ou tiver dados obstétricos
           if (p.is_pregnant || p.ultima_dum || p.idade_gestacional_dias || p.condicoes_saude?.gestante) {
             linhasCuidado.push({
               linha: "MATERNO_INFANTIL",
@@ -627,7 +833,6 @@ function showSidebar(data) {
             });
           }
 
-          // Se possuir diabetes marcado no cadastro
           if (p.condicoes_saude?.diabetes) {
             linhasCuidado.push({
               linha: "DIABETES",
@@ -640,7 +845,6 @@ function showSidebar(data) {
             });
           }
 
-          // Se possuir hipertensão arterial
           if (p.condicoes_saude?.hipertensao_arterial) {
             linhasCuidado.push({
               linha: "HIPERTENSAO",
@@ -653,7 +857,6 @@ function showSidebar(data) {
             });
           }
 
-          // Se não caiu em nenhuma linha acima, cria linha geral para não descartar
           if (linhasCuidado.length === 0) {
             linhasCuidado.push({
               linha: "ATENCAO_PRIMARIA",
@@ -710,275 +913,72 @@ function showSidebar(data) {
         })
       };
 
-      console.log(`[e-SUS Lens HIE] Enviando lote para a API com ${batchPayload.candidatos.length} candidato(s):`, batchPayload);
-
-      try {
-        chrome.runtime.sendMessage({ type: "HIE_SYNC_BATCH", payload: batchPayload }, async (response) => {
-          if (chrome.runtime.lastError) {
-            feedback.style.backgroundColor = "#FFEBEE";
-            feedback.style.color = "#C62828";
-            feedback.textContent = `Falha de comunicação com a extensão: ${chrome.runtime.lastError.message}. Recarregue a página do e-SUS (F5).`;
-            if (btn) { btn.disabled = false; btn.textContent = "🔄 Sync HIE"; }
-            return;
-          }
-
-          if (response?.ok) {
-            const body = response.body;
-            const sucessos = body.processados_sucesso || 0;
-            const erros = body.erros || [];
-
-            if (erros.length > 0) {
-              console.warn("[e-SUS Lens HIE] Alguns registros falharam na API:", erros);
-              feedback.style.backgroundColor = "#FFF3CD";
-              feedback.style.color = "#856404";
-              feedback.textContent = `Sincronizado parcialmente: ${sucessos} com sucesso, ${erros.length} com erro. Verifique o console.`;
-            } else {
-              feedback.style.backgroundColor = "#E8F5E9";
-              feedback.style.color = "#1B5E20";
-              feedback.textContent = `✓ Todos os ${sucessos} paciente(s) do IndexedDB foram sincronizados com sucesso na API HIE!`;
-            }
-
-            // Marca registros sincronizados no IndexedDB local
-            const keys = records.map(r => r.key);
-            const idbRef = window.ESusIdb || globalThis.ESusIdb;
-            if (idbRef) await idbRef.mark_as_synced(keys);
-          } else {
-            feedback.style.backgroundColor = "#FFEBEE";
-            feedback.style.color = "#C62828";
-            feedback.textContent = `Falha na sincronização: ${response?.error || "Serviço da API HIE indisponível em http://localhost:3000"}`;
-          }
-          if (btn) { btn.disabled = false; btn.textContent = "🔄 Sync HIE"; }
-        });
-      } catch (runtimeErr) {
-        feedback.style.backgroundColor = "#FFEBEE";
-        feedback.style.color = "#C62828";
-        feedback.textContent = `A extensão foi recarregada. Por favor, dê F5 nesta página do e-SUS para restabelecer a conexão.`;
-        if (btn) { btn.disabled = false; btn.textContent = "🔄 Sync HIE"; }
-      }
-    } catch (e) {
-      feedback.style.backgroundColor = "#FFEBEE";
-      feedback.style.color = "#C62828";
-      feedback.textContent = `Erro ao sincronizar: ${e.message}. Dê F5 na página.`;
-      if (btn) { btn.disabled = false; btn.textContent = "🔄 Sync HIE"; }
+      chrome.runtime.sendMessage({ type: "HIE_SYNC_BATCH", payload: batchPayload }, async (response) => {
+        if (response?.ok) {
+          console.log(`[e-SUS Lens HIE AutoSync] Sincronização silenciosa concluída (${pendingRecords.length} registros).`);
+          const keys = pendingRecords.map(r => r.key);
+          await idb.mark_as_synced(keys);
+        }
+      });
+    } catch (err) {
+      console.warn("[e-SUS Lens HIE AutoSync] Falha silenciosa no autosync:", err);
     }
+  }, 1500);
+}
+
+/**
+ * Abre a sidebar posicionando diretamente na aba "Acesso Saúde CE"
+ */
+function openSidebarToAcessoSaude() {
+  const sidebar = document.getElementById("esus-lens-sidebar");
+  if (!sidebar) {
+    runWasmExtractor(false);
+    return;
   }
+  sidebar.style.transform = "translateX(0)";
+  document.body.style.paddingRight = "400px";
+  isSidebarOpen = true;
 
-  /**
-   * Sincronização Automática Silenciosa (Zero-Click):
-   * Disparada logo após o Wasm extrair e consolidar os dados do paciente atual.
-   */
-  let autoSyncDebounceTimer = null;
-  function autoSyncPatientSilently(patientData) {
-    if (!patientData || !patientData.cpf) return;
+  const btnAcesso = sidebar.querySelector('button[data-tab="tab-acesso-saude"]');
+  if (btnAcesso) btnAcesso.click();
 
-    clearTimeout(autoSyncDebounceTimer);
-    autoSyncDebounceTimer = setTimeout(async () => {
-      try {
-        const idb = window.ESusIdb || globalThis.ESusIdb;
-        if (!idb) return;
+  const reopen = document.getElementById("esus-lens-reopen");
+  if (reopen) reopen.style.display = "none";
+}
 
-        // Pega todos os registros pendentes do IndexedDB para enviar em batch
-        const records = await idb.get_all_patients();
-        if (!records || records.length === 0) return;
+/**
+ * Injeta avisos contextuais e badges de tutelamento diretamente na página do e-SUS PEC
+ */
+function embedPecGuidance(patient) {
+  if (!patient || !AcessoSaude?.avaliarCompletude) return;
 
-        // Filtra apenas os que não foram sincronizados ainda ou foram atualizados recentemente
-        const pendingRecords = records.filter(r => r.sync_status !== "SINCRONIZADO");
-        if (pendingRecords.length === 0) return;
+  // Remove embeds anteriores para reavaliar sem duplicar
+  const oldBanner = document.getElementById("esus-lens-pec-banner");
+  if (oldBanner) oldBanner.remove();
 
-        const sessionData = window.__ESUS_GRAPHQL_DATA__?.session_info || {};
-        const resolveIbge = (munObj) => {
-          if (!munObj) return null;
-          const nome = (munObj.nome || "").toUpperCase().trim();
-          if (nome.includes("GUARAMIRANGA")) return "2305100";
-          if (nome.includes("FORTALEZA")) return "2304400";
-          if (nome.includes("SOBRAL")) return "2312908";
-          if (nome.includes("TIANGU")) return "2313401";
-          if (munObj.id && /^\d{7}$/.test(String(munObj.id))) return String(munObj.id);
-          return null;
-        };
+  const avaliacao = AcessoSaude.avaliarCompletude(patient, "", "");
+  const headerAlvo = document.querySelector("h2.css-k7p917");
+  if (!headerAlvo || !headerAlvo.parentElement) return;
 
-        const batchPayload = {
-          origem: {
-            versao_extensao: chrome.runtime.getManifest().version,
-            unidade_cnes: sessionData.health_unit_cnes || "2333740",
-            municipio_ibge: resolveIbge({ nome: sessionData.municipio_nome }) || "2305100",
-            profissional_cpf: sessionData.professional_cpf || "00000000000",
-            profissional_nome: sessionData.professional_name || "Profissional e-SUS",
-            profissional_cbo: sessionData.cbo_name || "Médico",
-            conselho_sigla: sessionData.conselho_classe_sigla || "CRM",
-            conselho_numero: sessionData.numero_conselho_classe || "0000",
-            timestamp_envio: Date.now(),
-          },
-          candidatos: pendingRecords.map(r => {
-            const p = r.data || {};
-            const end = p.endereco || {};
-            const est = p.estratificacao_risco || {};
-            const ev = p.evolucao_pre_natal || {};
-            // Prioriza o session_info gravado no próprio registro do IndexedDB!
-            const sess = p.session_info || sessionData || {};
+  const banner = document.createElement("div");
+  banner.id = "esus-lens-pec-banner";
+  banner.style.margin = "10px 0 14px 0";
+  banner.style.padding = "10px 14px";
+  banner.style.borderRadius = "6px";
+  banner.style.fontFamily = "'Roboto', 'Segoe UI', Arial, sans-serif";
+  banner.style.fontSize = "0.85rem";
+  banner.style.display = "flex";
+  banner.style.alignItems = "center";
+  banner.style.justifyContent = "space-between";
+  banner.style.boxShadow = "0 1px 3px rgba(0,0,0,0.08)";
+  banner.style.transition = "all 0.2s ease-in-out";
 
-            const linhasCuidado = [];
-            if (p.is_pregnant || p.ultima_dum || p.idade_gestacional_dias || p.condicoes_saude?.gestante) {
-              linhasCuidado.push({
-                linha: "MATERNO_INFANTIL",
-                status: "ATIVA",
-                grau_risco: (est.grau || "HABITUAL").toUpperCase(),
-                rotulo_risco: est.rotulo || "Risco Habitual",
-                cor_risco: est.cor || "#4CAF50",
-                fatores_identificados: est.fatores || [],
-                dados_especificos: {
-                  dum: p.ultima_dum || null,
-                  idade_gestacional_dias: p.idade_gestacional_dias || null,
-                }
-              });
-            }
+  if (avaliacao.prontoParaEnvio) {
+    banner.style.backgroundColor = "#E8F5E9";
+    banner.style.borderLeft = "4px solid #4CAF50";
+    banner.style.color = "#1B5E20";
 
-            if (p.condicoes_saude?.diabetes) {
-              linhasCuidado.push({
-                linha: "DIABETES",
-                status: "ATIVA",
-                grau_risco: p.is_pregnant ? "ALTO_RISCO" : "POTENCIAL",
-                rotulo_risco: p.is_pregnant ? "DIABETES EM GESTAÇÃO" : "DIABETES TIPO 2",
-                cor_risco: p.is_pregnant ? "#D32F2F" : "#FFA000",
-                fatores_identificados: [{ categoria: "Morbidade", descricao: "Diabetes Mellitus Autorreferido" }],
-                dados_especificos: {}
-              });
-            }
-
-            if (p.condicoes_saude?.hipertensao_arterial) {
-              linhasCuidado.push({
-                linha: "HIPERTENSAO",
-                status: "ATIVA",
-                grau_risco: p.is_pregnant ? "ALTO_RISCO" : "POTENCIAL",
-                rotulo_risco: p.is_pregnant ? "HIPERTENSÃO EM GESTAÇÃO" : "HIPERTENSÃO ARTERIAL CRÔNICA",
-                cor_risco: p.is_pregnant ? "#D32F2F" : "#FFA000",
-                fatores_identificados: [{ categoria: "Morbidade", descricao: "Hipertensão Arterial Autorreferida" }],
-                dados_especificos: {}
-              });
-            }
-
-            if (linhasCuidado.length === 0) {
-              linhasCuidado.push({
-                linha: "ATENCAO_PRIMARIA",
-                status: "ATIVA",
-                grau_risco: "HABITUAL",
-                rotulo_risco: "Risco Habitual",
-                cor_risco: "#4CAF50",
-                fatores_identificados: [],
-                dados_especificos: {}
-              });
-            }
-
-            return {
-              key: r.key,
-              updated_at: r.updated_at || new Date().toISOString(),
-              cidadao: {
-                cpf: p.cpf || r.key,
-                cns: p.cns || null,
-                nome: p.name || "Cidadão",
-                data_nascimento: p.age || null,
-                sexo: p.sex || "Não inf.",
-                identidade_genero: p.gender_identity || null,
-                nome_mae: p.mother_name || null,
-                telefone_celular: p.telefone_celular || null,
-                raca_cor: p.raca_cor || null,
-                endereco: {
-                  cep: end.cep || null,
-                  bairro: end.bairro || null,
-                  logradouro: [end.tipo_logradouro?.nome, end.logradouro].filter(Boolean).join(" ") || end.logradouro || null,
-                  numero: end.numero || null,
-                  municipio_nome: end.municipio?.nome || null,
-                  municipio_ibge: resolveIbge(end.municipio) || null,
-                },
-                condicoes_saude_base: p.condicoes_saude || {},
-                sociodemografico: p.sociodemografico || {},
-              },
-              linhas_cuidado_identificadas: linhasCuidado,
-              atendimento_atual: {
-                atendimento_pec_id: ev.atendimento_id || null,
-                unidade_nome: sess.health_unit_name || null,
-                profissional_nome: sess.professional_name || null,
-                profissional_cpf: sess.professional_cpf || null,
-                profissional_cbo: sess.cbo_name || null,
-                conselho_sigla: sess.conselho_classe_sigla || null,
-                conselho_numero: sess.numero_conselho_classe || null,
-                cod_ciap_cid: p.cod_cipa || null,
-                subjetivo: ev.subjetivo || null,
-                objetivo: ev.objetivo || null,
-                avaliacao: ev.avaliacao || null,
-                problema: ev.problema || null,
-                data: ev.data_atendimento_epoch || Date.now(),
-              }
-            };
-          })
-        };
-
-        chrome.runtime.sendMessage({ type: "HIE_SYNC_BATCH", payload: batchPayload }, async (response) => {
-          if (response?.ok) {
-            console.log(`[e-SUS Lens HIE AutoSync] Sincronização silenciosa concluída (${pendingRecords.length} registros).`);
-            const keys = pendingRecords.map(r => r.key);
-            await idb.mark_as_synced(keys);
-          }
-        });
-      } catch (err) {
-        console.warn("[e-SUS Lens HIE AutoSync] Falha silenciosa no autosync:", err);
-      }
-    }, 1500);
-  }
-
-  /**
-   * Abre a sidebar posicionando diretamente na aba "Acesso Saúde CE"
-   */
-  function openSidebarToAcessoSaude() {
-    const sidebar = document.getElementById("esus-lens-sidebar");
-    if (!sidebar) {
-      runWasmExtractor(false);
-      return;
-    }
-    sidebar.style.transform = "translateX(0)";
-    document.body.style.paddingRight = "400px";
-    isSidebarOpen = true;
-
-    const btnAcesso = sidebar.querySelector('button[data-tab="tab-acesso-saude"]');
-    if (btnAcesso) btnAcesso.click();
-
-    const reopen = document.getElementById("esus-lens-reopen");
-    if (reopen) reopen.style.display = "none";
-  }
-
-  /**
-   * Injeta avisos contextuais e badges de tutelamento diretamente na página do e-SUS PEC
-   */
-  function embedPecGuidance(patient) {
-    if (!patient || !AcessoSaude?.avaliarCompletude) return;
-
-    // Remove embeds anteriores para reavaliar sem duplicar
-    const oldBanner = document.getElementById("esus-lens-pec-banner");
-    if (oldBanner) oldBanner.remove();
-
-    const avaliacao = AcessoSaude.avaliarCompletude(patient, "", "");
-    const headerAlvo = document.querySelector("h2.css-k7p917");
-    if (!headerAlvo || !headerAlvo.parentElement) return;
-
-    const banner = document.createElement("div");
-    banner.id = "esus-lens-pec-banner";
-    banner.style.margin = "10px 0 14px 0";
-    banner.style.padding = "10px 14px";
-    banner.style.borderRadius = "6px";
-    banner.style.fontFamily = "'Roboto', 'Segoe UI', Arial, sans-serif";
-    banner.style.fontSize = "0.85rem";
-    banner.style.display = "flex";
-    banner.style.alignItems = "center";
-    banner.style.justifyContent = "space-between";
-    banner.style.boxShadow = "0 1px 3px rgba(0,0,0,0.08)";
-    banner.style.transition = "all 0.2s ease-in-out";
-
-    if (avaliacao.prontoParaEnvio) {
-      banner.style.backgroundColor = "#E8F5E9";
-      banner.style.borderLeft = "4px solid #4CAF50";
-      banner.style.color = "#1B5E20";
-
-      banner.innerHTML = `
+    banner.innerHTML = `
         <div style="display: flex; align-items: center; gap: 8px;">
           <span style="font-size: 1.1rem;">🩺</span>
           <span>
@@ -989,14 +989,14 @@ function showSidebar(data) {
           Solicitar Parecer ➔
         </button>
       `;
-    } else {
-      banner.style.backgroundColor = "#FFF3CD";
-      banner.style.borderLeft = "4px solid #FFA000";
-      banner.style.color = "#856404";
+  } else {
+    banner.style.backgroundColor = "#FFF3CD";
+    banner.style.borderLeft = "4px solid #FFA000";
+    banner.style.color = "#856404";
 
-      const pendenciasTexto = avaliacao.criticosPendentes.map((c) => c.titulo).join(", ");
+    const pendenciasTexto = avaliacao.criticosPendentes.map((c) => c.titulo).join(", ");
 
-      banner.innerHTML = `
+    banner.innerHTML = `
         <div style="display: flex; align-items: center; gap: 8px;">
           <span style="font-size: 1.1rem;">💡</span>
           <div>
@@ -1008,65 +1008,65 @@ function showSidebar(data) {
           Verificar Pendências ➔
         </button>
       `;
-    }
-
-    // Insere o banner diretamente na interface do PEC, logo abaixo do nome do paciente
-    headerAlvo.parentElement.insertAdjacentElement("afterend", banner);
-
-    // Evento de clique para abrir a sidebar diretamente na aba correta
-    banner.querySelector("#esus-lens-btn-abrir-acesso")?.addEventListener("click", (e) => {
-      e.preventDefault();
-      openSidebarToAcessoSaude();
-    });
-
-    // ─── Dispara Leitor de Sinais de Alarme com IA Gemini (Assíncrono) ──────
-    checkGeminiRedFlagsAsync(patient, banner);
   }
 
-  /**
-   * Envia apenas os dados clínicos semânticos para o Gemini avaliar sinais de perigo iminente.
-   * Não bloqueia a tela; se encontrar perigo crítico, atualiza o banner visual imediatamente.
-   */
-  async function checkGeminiRedFlagsAsync(patient, bannerEl) {
-    if (!patient) return;
-    const ev = patient.evolucao_pre_natal;
-    // Se não há texto no SOAP, não há o que o NLP analisar
-    if (!ev || (!ev.subjetivo && !ev.objetivo && !ev.avaliacao)) return;
+  // Insere o banner diretamente na interface do PEC, logo abaixo do nome do paciente
+  headerAlvo.parentElement.insertAdjacentElement("afterend", banner);
 
-    try {
-      const soapPayload = {
-        idade: patient.age || null,
-        idadeGestacional: patient.idade_gestacional_dias ? `${Math.floor(patient.idade_gestacional_dias / 7)} semanas` : null,
-        subjetivo: ev.subjetivo || null,
-        objetivo: ev.objetivo || null,
-        avaliacao: ev.avaliacao || null,
-        problema: ev.problema || patient.cod_cipa || null,
-      };
+  // Evento de clique para abrir a sidebar diretamente na aba correta
+  banner.querySelector("#esus-lens-btn-abrir-acesso")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    openSidebarToAcessoSaude();
+  });
 
-      chrome.runtime.sendMessage({ type: "GEMINI_ANALISAR_RED_FLAGS", payload: soapPayload }, (response) => {
-        if (!response?.ok || !response.data) return;
-        const result = response.data;
+  // ─── Dispara Leitor de Sinais de Alarme com IA Gemini (Assíncrono) ──────
+  checkGeminiRedFlagsAsync(patient, banner);
+}
 
-        if (result.temAlarme && result.gravidade === "CRITICO") {
-          console.warn("[e-SUS Lens IA] SINAL DE ALARME CRÍTICO DETECTADO PELO GEMINI:", result);
+/**
+ * Envia apenas os dados clínicos semânticos para o Gemini avaliar sinais de perigo iminente.
+ * Não bloqueia a tela; se encontrar perigo crítico, atualiza o banner visual imediatamente.
+ */
+async function checkGeminiRedFlagsAsync(patient, bannerEl) {
+  if (!patient) return;
+  const ev = patient.evolucao_pre_natal;
+  // Se não há texto no SOAP, não há o que o NLP analisar
+  if (!ev || (!ev.subjetivo && !ev.objetivo && !ev.avaliacao)) return;
 
-          // Cria card de Alerta de Urgência no banner do PEC
-          const alertaBox = document.createElement("div");
-          alertaBox.id = "esus-lens-ia-alert";
-          alertaBox.style.marginTop = "8px";
-          alertaBox.style.padding = "8px 12px";
-          alertaBox.style.backgroundColor = "#B71C1C";
-          alertaBox.style.color = "#FFFFFF";
-          alertaBox.style.borderRadius = "4px";
-          alertaBox.style.fontWeight = "500";
-          alertaBox.style.fontSize = "0.8rem";
-          alertaBox.style.boxShadow = "0 2px 4px rgba(0,0,0,0.15)";
+  try {
+    const soapPayload = {
+      idade: patient.age || null,
+      idadeGestacional: patient.idade_gestacional_dias ? `${Math.floor(patient.idade_gestacional_dias / 7)} semanas` : null,
+      subjetivo: ev.subjetivo || null,
+      objetivo: ev.objetivo || null,
+      avaliacao: ev.avaliacao || null,
+      problema: ev.problema || patient.cod_cipa || null,
+    };
 
-          const listaAlertas = result.alertas && result.alertas.length > 0
-            ? result.alertas.map(a => `<li><strong>${a.titulo}:</strong> ${a.descricao} <em>(${a.condutaSugerida})</em></li>`).join("")
-            : `<li>${result.resumoClinico || "Sinais premonitórios de urgência obstétrica identificados no texto da consulta."}</li>`;
+    chrome.runtime.sendMessage({ type: "GEMINI_ANALISAR_RED_FLAGS", payload: soapPayload }, (response) => {
+      if (!response?.ok || !response.data) return;
+      const result = response.data;
 
-          alertaBox.innerHTML = `
+      if (result.temAlarme && result.gravidade === "CRITICO") {
+        console.warn("[e-SUS Lens IA] SINAL DE ALARME CRÍTICO DETECTADO PELO GEMINI:", result);
+
+        // Cria card de Alerta de Urgência no banner do PEC
+        const alertaBox = document.createElement("div");
+        alertaBox.id = "esus-lens-ia-alert";
+        alertaBox.style.marginTop = "8px";
+        alertaBox.style.padding = "8px 12px";
+        alertaBox.style.backgroundColor = "#B71C1C";
+        alertaBox.style.color = "#FFFFFF";
+        alertaBox.style.borderRadius = "4px";
+        alertaBox.style.fontWeight = "500";
+        alertaBox.style.fontSize = "0.8rem";
+        alertaBox.style.boxShadow = "0 2px 4px rgba(0,0,0,0.15)";
+
+        const listaAlertas = result.alertas && result.alertas.length > 0
+          ? result.alertas.map(a => `<li><strong>${a.titulo}:</strong> ${a.descricao} <em>(${a.condutaSugerida})</em></li>`).join("")
+          : `<li>${result.resumoClinico || "Sinais premonitórios de urgência obstétrica identificados no texto da consulta."}</li>`;
+
+        alertaBox.innerHTML = `
             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
               <span style="font-size: 1rem;">🚨</span>
               <strong style="text-transform: uppercase;">Atenção Clínica Crítica (IA Gemini):</strong>
@@ -1076,15 +1076,15 @@ function showSidebar(data) {
             </ul>
           `;
 
-          // Remove alerta anterior se existir e insere no banner
-          document.getElementById("esus-lens-ia-alert")?.remove();
-          bannerEl.appendChild(alertaBox);
-        }
-      });
-    } catch (e) {
-      console.warn("[e-SUS Lens IA] Falha silenciosa ao checar sinais de alarme:", e);
-    }
+        // Remove alerta anterior se existir e insere no banner
+        document.getElementById("esus-lens-ia-alert")?.remove();
+        bannerEl.appendChild(alertaBox);
+      }
+    });
+  } catch (e) {
+    console.warn("[e-SUS Lens IA] Falha silenciosa ao checar sinais de alarme:", e);
   }
+}
 
 function waitForPatientNameElement() {
   return new Promise((resolve) => {
@@ -1098,7 +1098,7 @@ function waitForPatientNameElement() {
     }
 
     console.log("[e-SUS Lens] UI não está pronta ainda, aguardando MutationObserver...");
-    
+
     const observer = new MutationObserver((mutations) => {
       if (document.querySelector("h2.css-k7p917")) {
         console.log("[e-SUS Lens] UI detectada via MutationObserver.");
@@ -1111,73 +1111,115 @@ function waitForPatientNameElement() {
       childList: true,
       subtree: true
     });
-    
+
     // Fallback/Timeout: Se a UI não carregar em 10 segundos, tentamos mesmo assim e avisamos o log.
     setTimeout(() => {
-       console.warn("[e-SUS Lens] Timeout de 10 segundos no MutationObserver. Tentando prosseguir mesmo assim.");
-       observer.disconnect();
-       resolve();
-    }, 10000);
+      console.warn("[e-SUS Lens] Timeout de 10 segundos no MutationObserver. Tentando prosseguir mesmo assim.");
+      observer.disconnect();
+      resolve();
+    }, 1000);
   });
 }
 
+// Cache da instância do módulo Wasm para evitar re-inicializar/re-compilar a cada evento
+// e fila (lock) para evitar corridas entre chamadas concorrentes de runWasmExtractor
+let cachedWasmModule = null;
+let wasmInitPromise = null;
+let isExtractingWasm = false;
+let pendingExtractionRequest = false;
+
+async function getWasmModule() {
+  if (cachedWasmModule) return cachedWasmModule;
+  if (!wasmInitPromise) {
+    wasmInitPromise = (async () => {
+      const wasmUrl = chrome.runtime.getURL("pkg/copilot_pec_esus.js");
+      const wasm = await import(wasmUrl);
+      await wasm.default(chrome.runtime.getURL("pkg/copilot_pec_esus_bg.wasm"));
+      cachedWasmModule = wasm;
+      return wasm;
+    })();
+  }
+  return wasmInitPromise;
+}
+
 async function runWasmExtractor(isSilent = false) {
+  if (isExtractingWasm) {
+    pendingExtractionRequest = true;
+    return;
+  }
+  isExtractingWasm = true;
+
   try {
-    // 1. Espera a UI do paciente carregar
-    await waitForPatientNameElement();
-    
+    // 1. Se o GraphQL já interceptou o paciente, não bloqueia esperando o h2 do DOM
+    const hasGraphqlPatient = (() => {
+      try {
+        const raw = localStorage.getItem('__ESUS_GRAPHQL_DATA__');
+        return Boolean(raw && JSON.parse(raw)?.patient_info?.name);
+      } catch {
+        return false;
+      }
+    })();
+
+    if (!hasGraphqlPatient) {
+      await waitForPatientNameElement();
+    }
+
     if (!isSilent) console.log("[e-SUS Lens] UI detectada. Carregando módulo Wasm...");
 
-    // 2. Importa e inicializa o WebAssembly compilado
-    const wasmUrl = chrome.runtime.getURL("pkg/copilot_pec_esus.js");
-    const wasm = await import(wasmUrl);
-    await wasm.default(chrome.runtime.getURL("pkg/copilot_pec_esus_bg.wasm"));
+    // 2. Obtém o WebAssembly já inicializado em memória
+    const wasm = await getWasmModule();
 
     // 3. Chama a função em Rust que lê o DOM, Mescla com Banco Local e devolve o Objeto
     try {
-        const patientData = await wasm.extract_patient_info_promise();
-        
-        // Se patientData for NULL, não há dados para processar
-        if (!patientData) {
-            return;
-        }
-        
-        console.log("[e-SUS Lens] Dados extraídos e consolidados pelo Rust:", patientData);
+      const patientData = await wasm.extract_patient_info_promise();
 
-        // Mantém a aba Acesso Saúde CE com o paciente mais recente (mesmo com a sidebar já aberta)
-        AcessoSaude.setPatient(patientData);
+      // Se patientData for NULL, não há dados para processar
+      if (!patientData) {
+        return;
+      }
 
-        // FRENTE 2: Embedar avisos de tutelamento diretamente na UI nativa do e-SUS PEC
-        embedPecGuidance(patientData);
+      console.log("[e-SUS Lens] Dados extraídos e consolidados pelo Rust:", patientData);
 
-        // 4. Injeta a Sidebar Lateral do Painel
-        showSidebar(patientData);
+      // Mantém a aba Acesso Saúde CE com o paciente mais recente (mesmo com a sidebar já aberta)
+      AcessoSaude.setPatient(patientData);
 
-        // 5. Envia os dados para o Background Script tentar gerar a notificação do SO
-        chrome.runtime.sendMessage({
-            type: "NOTIFY_PATIENT_DATA",
-            payload: patientData
-        });
+      // FRENTE 2: Embedar avisos de tutelamento diretamente na UI nativa do e-SUS PEC
+      embedPecGuidance(patientData);
 
-        // 6. AUTO-SYNC ZERO-CLICK: Dispara sincronização silenciosa em background com a API HIE
-        autoSyncPatientSilently(patientData);
+      // 4. Injeta a Sidebar Lateral do Painel
+      showSidebar(patientData);
+
+      // 5. Envia os dados para o Background Script tentar gerar a notificação do SO
+      chrome.runtime.sendMessage({
+        type: "NOTIFY_PATIENT_DATA",
+        payload: patientData
+      });
+
+      // 6. AUTO-SYNC ZERO-CLICK: Dispara sincronização silenciosa em background com a API HIE
+      autoSyncPatientSilently(patientData);
     } catch (err) {
-        console.error("[e-SUS Lens] O Rust retornou um Erro:", err);
+      console.error("[e-SUS Lens] O Rust retornou um Erro:", err);
     }
 
   } catch (error) {
     console.error("[e-SUS Lens] Erro ao executar extração via Wasm:", error);
+  } finally {
+    isExtractingWasm = false;
+    if (pendingExtractionRequest) {
+      pendingExtractionRequest = false;
+      runWasmExtractor(true);
+    }
   }
 }
 
 const script = document.createElement('script');
 script.src = chrome.runtime.getURL('scripts/idb_helper.js');
-script.onload = function() {
-    this.remove();
-    const injectScript = document.createElement('script');
-    injectScript.src = chrome.runtime.getURL('scripts/inject.js');
-    injectScript.onload = function() { this.remove(); };
-    (document.head || document.documentElement).appendChild(injectScript);
+script.onload = function () {
+  this.remove();
+  const injectScript = document.createElement('script');
+  injectScript.src = chrome.runtime.getURL('scripts/inject.js');
+  injectScript.onload = function () { this.remove(); };
+  (document.head || document.documentElement).appendChild(injectScript);
 };
 (document.head || document.documentElement).appendChild(script);
 
@@ -1186,50 +1228,85 @@ let isSidebarOpen = false;
 
 // Ouve o evento emitido pelo inject.js caso ele consiga pegar os dados
 window.addEventListener('esus_graphql_intercepted', (e) => {
-    console.log("[e-SUS Lens Content] Recebido sinal do interceptor:", e.detail);
-    localStorage.setItem('__ESUS_GRAPHQL_DATA__', JSON.stringify(e.detail));
+  console.log("[e-SUS Lens Content] Recebido sinal do interceptor:", e.detail);
+  localStorage.setItem('__ESUS_GRAPHQL_DATA__', JSON.stringify(e.detail));
 
-    // Executa a extração e atualiza os dados na tela (mesmo que a sidebar já esteja aberta)
-    runWasmExtractor(true);
+  // Executa a extração e atualiza os dados na tela (mesmo que a sidebar já esteja aberta)
+  runWasmExtractor(true);
 });
 
 // Monitoramento Contínuo da Troca de Paciente no SPA do e-SUS PEC (Sem precisar de F5)
 let lastObservedPatientName = "";
 
+function getRouteEntityId(url = window.location.href) {
+  const match = String(url).match(/\/(gestaoCadastros\/cadastro-individual|lista-atendimento\/atendimento)\/(\d+)(?:\/|$)/);
+  return match ? `${match[1]}/${match[2]}` : null;
+}
+
+let lastObservedRouteEntityId = getRouteEntityId();
+
+function clearCachedPatientInfo() {
+  try {
+    const raw = localStorage.getItem('__ESUS_GRAPHQL_DATA__');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      parsed.patient_info = {};
+      localStorage.setItem('__ESUS_GRAPHQL_DATA__', JSON.stringify(parsed));
+    }
+  } catch (e) { }
+}
+
 function setupSpaNavigationObserver() {
-    // 1. Observer no elemento h2 onde fica o nome do paciente no cabeçalho do PEC
-    const domObserver = new MutationObserver(() => {
-        const nameEl = document.querySelector("h2.css-k7p917");
-        const currentName = nameEl ? nameEl.textContent.trim() : "";
+  // 1. Observer no DOM (monitora tanto a mudança do ID na URL quanto o nome do paciente no h2)
+  const domObserver = new MutationObserver(() => {
+    // Ignora mutações causadas pela própria sidebar da extensão para não gerar loop
+    const currentRouteId = getRouteEntityId(window.location.href);
+    if (currentRouteId && currentRouteId !== lastObservedRouteEntityId) {
+      console.log(`[e-SUS Lens SPA] ID da rota mudou de "${lastObservedRouteEntityId}" para "${currentRouteId}". Atualizando paciente...`);
+      lastObservedRouteEntityId = currentRouteId;
+      runWasmExtractor(true);
+    }
 
-        if (currentName && currentName !== lastObservedPatientName) {
-            console.log(`[e-SUS Lens SPA] Nome do paciente mudou de "${lastObservedPatientName}" para "${currentName}". Atualizando extensão...`);
-            lastObservedPatientName = currentName;
-            
-            // Reexecuta o Wasm para capturar os dados do novo paciente diretamente do DOM/GraphQL
-            runWasmExtractor(true);
-        }
-    });
+    const nameEl = document.querySelector("h2.css-k7p917");
+    const currentName = nameEl ? nameEl.textContent.trim() : "";
 
-    domObserver.observe(document.body, {
-        childList: true,
-        subtree: true,
-        characterData: true
-    });
+    if (currentName && currentName !== lastObservedPatientName) {
+      console.log(`[e-SUS Lens SPA] Nome do paciente mudou de "${lastObservedPatientName}" para "${currentName}". Atualizando extensão...`);
+      lastObservedPatientName = currentName;
 
-    // 2. Ouve eventos de troca de rota no SPA disparados pelo inject.js (pushState/popstate)
-    window.addEventListener('esus_route_changed', (e) => {
-        console.log("[e-SUS Lens SPA] Rota do e-SUS mudou:", e.detail?.url);
-        // Aguarda meio segundo para a UI do novo prontuário renderizar
-        setTimeout(() => {
-            const nameEl = document.querySelector("h2.css-k7p917");
-            const currentName = nameEl ? nameEl.textContent.trim() : "";
-            if (currentName && currentName !== lastObservedPatientName) {
-                lastObservedPatientName = currentName;
-                runWasmExtractor(true);
-            }
-        }, 600);
-    });
+      // Reexecuta o Wasm para capturar os dados do novo paciente diretamente do DOM/GraphQL
+      runWasmExtractor(true);
+    }
+  });
+
+  domObserver.observe(document.body, {
+    childList: true,
+    subtree: true,
+    characterData: true
+  });
+
+  // 2. Ouve eventos de troca de rota no SPA disparados pelo inject.js (pushState/popstate)
+  window.addEventListener('esus_route_changed', (e) => {
+    const currentUrl = e.detail?.url || window.location.href;
+    console.log("[e-SUS Lens SPA] Rota do e-SUS mudou:", currentUrl);
+
+    const currentRouteId = getRouteEntityId(currentUrl);
+    const routeIdChanged = Boolean(currentRouteId && currentRouteId !== lastObservedRouteEntityId);
+    if (routeIdChanged) {
+      lastObservedRouteEntityId = currentRouteId;
+      runWasmExtractor(true);
+    }
+
+    // Fallback rápido caso o DOM demore a renderizar o cabeçalho
+    setTimeout(() => {
+      const nameEl = document.querySelector("h2.css-k7p917");
+      const currentName = nameEl ? nameEl.textContent.trim() : "";
+      if (routeIdChanged || (currentName && currentName !== lastObservedPatientName)) {
+        if (currentName) lastObservedPatientName = currentName;
+        runWasmExtractor(true);
+      }
+    }, 300);
+  });
 }
 
 // Inicializa o monitoramento automático de SPA
@@ -1239,7 +1316,7 @@ setupSpaNavigationObserver();
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "TOGGLE_SIDEBAR") {
     const sidebar = document.getElementById("esus-lens-sidebar");
-    
+
     // Se a sidebar já existe, controlamos a visibilidade (abre/fecha)
     if (sidebar) {
       if (sidebar.style.transform === "translateX(400px)") {

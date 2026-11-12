@@ -5,8 +5,44 @@
 (function() {
   const originalFetch = window.fetch;
 
+  // Extrai a rota e o ID de cadastro individual ou atendimento:
+  // - /gestaoCadastros/cadastro-individual/<id>/
+  // - /lista-atendimento/atendimento/<id>/
+  const getRouteEntityId = (href = window.location.href) => {
+    const match = String(href).match(/\/(gestaoCadastros\/cadastro-individual|lista-atendimento\/atendimento)\/(\d+)(?:\/|$)/);
+    return match ? `${match[1]}/${match[2]}` : null;
+  };
+
+  let lastRouteEntityId = getRouteEntityId();
+
+  const checkRouteEntityChange = (href = window.location.href) => {
+    const currentId = getRouteEntityId(href);
+    // Só reseta quando a URL atual É uma rota de paciente (cadastro-individual/<id> ou atendimento/<id>)
+    // e o ID for diferente do último paciente visitado (mesmo que tenha passado por uma lista no meio!)
+    if (currentId && currentId !== lastRouteEntityId) {
+      if (lastRouteEntityId !== null) {
+        console.log(`[e-SUS Lens Inject] Novo paciente pela URL (${lastRouteEntityId} -> ${currentId}). Limpando patient_info anterior!`);
+        if (window.__ESUS_GRAPHQL_DATA__) {
+          window.__ESUS_GRAPHQL_DATA__.patient_info = {};
+        }
+        try {
+          const raw = localStorage.getItem('__ESUS_GRAPHQL_DATA__');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            parsed.patient_info = {};
+            localStorage.setItem('__ESUS_GRAPHQL_DATA__', JSON.stringify(parsed));
+          }
+        } catch (e) {}
+      }
+      lastRouteEntityId = currentId;
+      return true;
+    }
+    return false;
+  };
+
   // Intercepta History API (pushState e replaceState) para detecção de troca de rota no SPA do e-SUS
   const dispatchUrlChange = () => {
+    checkRouteEntityChange(window.location.href);
     window.dispatchEvent(new CustomEvent('esus_route_changed', { detail: { url: window.location.href } }));
   };
 
@@ -27,6 +63,10 @@
   window.addEventListener('popstate', dispatchUrlChange);
 
   window.fetch = async function(...args) {
+    // Verifica ANTES do fetch iniciar se o médico já navegou para outro ID na URL
+    // (evita que o estado seja limpo apenas depois que a resposta chegar ou fora de ordem)
+    checkRouteEntityChange(window.location.href);
+
     const response = await originalFetch.apply(this, args);
     const url = typeof args[0] === 'string' ? args[0] : args[0]?.url;
 
@@ -39,6 +79,9 @@
         if (!window.__ESUS_GRAPHQL_DATA__) {
             window.__ESUS_GRAPHQL_DATA__ = {};
         }
+
+        // Garante novamente que se a URL mudou, reseta antes de processar a resposta
+        checkRouteEntityChange(window.location.href);
 
         let isUpdated = false;
         const payloadArray = Array.isArray(data) ? data : [data];
