@@ -216,7 +216,11 @@ const AcessoSaude = (() => {
           : "Selecione para qual especialidade a dúvida deve ser encaminhada.",
         critico: true,
       },
-      {
+    ];
+
+    // Exibe o checklist obstétrico apenas quando a paciente for gestante
+    if (p.is_pregnant === true) {
+      checks.push({
         id: "obstetrico",
         titulo: "Contexto obstétrico (DUM / Idade Gestacional)",
         ok: Boolean(p.ultima_dum || p.idade_gestacional_dias),
@@ -224,8 +228,8 @@ const AcessoSaude = (() => {
           ? `DUM: ${p.ultima_dum || "Sem DUM"} | Idade gestacional registrada`
           : "Sem DUM ou Idade Gestacional registradas. Importante para o teleconsultor obstétrico.",
         critico: false,
-      },
-    ];
+      });
+    }
 
     const criticosPendentes = checks.filter((c) => c.critico && !c.ok);
     const avisosPendentes = checks.filter((c) => !c.critico && !c.ok);
