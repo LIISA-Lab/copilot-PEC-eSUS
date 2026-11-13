@@ -1023,14 +1023,68 @@ function embedPecGuidance(patient) {
     openSidebarToAcessoSaude();
   });
 
-  // ─── Dispara Leitor de Sinais de Alarme com IA Gemini (Assíncrono) ──────
-  checkGeminiRedFlagsAsync(patient, banner);
+  // Nota: checkGeminiRedFlagsAsync é disparado de forma centralizada após showSidebar em runWasmExtractor
+}
+
+// ─── Controle de Identidade Ativa, Fingerprint no IndexedDB e Retroalimentação IA ───
+let currentActivePatientKey = null;
+let currentActiveRouteId = null;
+let currentIaRequestToken = 0;
+const inFlightIaFingerprints = new Set();
+
+function getPatientUniqueKey(patient) {
+  if (!patient) return null;
+  return patient.cpf || patient.id || patient.name || null;
+}
+
+/**
+ * Gera uma assinatura (Content-Addressable Fingerprint) determinística do prontuário atual.
+ * Se essa string não mudar, o prontuário não mudou e a LLM NÃO é consultada novamente.
+ */
+function buildClinicalFingerprint(patient) {
+  if (!patient) return "";
+  const ev = patient.evolucao_pre_natal || {};
+  const cs = patient.condicoes_saude || {};
+  const condicoesAtivas = Object.entries(cs)
+    .filter(([_, v]) => v === true)
+    .map(([k]) => k)
+    .sort()
+    .join(",");
+
+  return [
+    patient.cpf || patient.id || "",
+    ev.atendimento_id || "",
+    (ev.subjetivo || "").trim(),
+    (ev.objetivo || "").trim(),
+    (ev.avaliacao || "").trim(),
+    (ev.problema || "").trim(),
+    (patient.cod_cipa || "").trim(),
+    String(patient.idade_gestacional_dias || ""),
+    condicoesAtivas,
+  ].join("|");
+}
+
+/**
+ * Verifica se o paciente da resposta assíncrona ainda é o mesmo paciente aberto na tela do médico.
+ */
+function isStillSameActivePatient(expectedPatientKey, expectedRouteId, expectedToken) {
+  const nowRouteId = getRouteEntityId(window.location.href);
+  if (expectedRouteId && nowRouteId && expectedRouteId !== nowRouteId) {
+    return false;
+  }
+  if (expectedPatientKey && currentActivePatientKey && expectedPatientKey !== currentActivePatientKey) {
+    return false;
+  }
+  if (expectedToken !== currentIaRequestToken) {
+    return false;
+  }
+  return true;
 }
 
 /**
  * Renderiza o Briefing Longitudinal + Red Flags na Sidebar (quando disponível)
  */
-function renderSidebarIaBriefing(iaAnalise) {
+function renderSidebarIaBriefing(iaAnalise, isFromCache = false) {
   const container = document.getElementById("esus-lens-ia-briefing-container");
   if (!container || !iaAnalise) return;
 
@@ -1050,11 +1104,13 @@ function renderSidebarIaBriefing(iaAnalise) {
        </div>`
     : "";
 
+  const versaoCiclo = Array.isArray(iaAnalise.historico_evolucao) ? iaAnalise.historico_evolucao.length + 1 : 1;
+
   container.style.display = "block";
   container.innerHTML = `
     <div style="background: ${corFundo}; border-left: 4px solid ${corBorda}; padding: 10px 12px; border-radius: 6px; font-size: 0.78rem; color: #333; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-        <strong style="color: ${corTitulo}; font-size: 0.82rem;">🧠 Briefing Clínico IA (Gemini)</strong>
+        <strong style="color: ${corTitulo}; font-size: 0.82rem;">🧠 Briefing Clínico IA ${versaoCiclo > 1 ? `(Ciclo #${versaoCiclo})` : ""}</strong>
         <span style="font-size: 0.68rem; font-weight: 700; padding: 2px 6px; border-radius: 10px; background: #fff; color: ${corTitulo};">${iaAnalise.gravidade || "NORMAL"}</span>
       </div>
       ${bf.perfilSintetico ? `<div style="margin-bottom: 4px;"><strong>Perfil:</strong> ${bf.perfilSintetico}</div>` : ""}
@@ -1066,24 +1122,114 @@ function renderSidebarIaBriefing(iaAnalise) {
   `;
 }
 
-/**
- * Envia apenas os dados clínicos semânticos para o Gemini avaliar sinais de perigo iminente
- * e gerar o Briefing Longitudinal, salvando o resultado em `ia_analise` no IndexedDB para o HIE.
- */
-let lastAnalyzedIaSignature = "";
+function renderCriticalAlertInBanner(result, bannerEl = null) {
+  const targetBanner = bannerEl || document.getElementById("esus-lens-pec-banner");
+  if (!result?.temAlarme || result.gravidade !== "CRITICO" || !targetBanner) return;
 
+  const alertaBox = document.createElement("div");
+  alertaBox.id = "esus-lens-ia-alert";
+  alertaBox.style.marginTop = "8px";
+  alertaBox.style.padding = "8px 12px";
+  alertaBox.style.backgroundColor = "#B71C1C";
+  alertaBox.style.color = "#FFFFFF";
+  alertaBox.style.borderRadius = "4px";
+  alertaBox.style.fontWeight = "500";
+  alertaBox.style.fontSize = "0.8rem";
+  alertaBox.style.boxShadow = "0 2px 4px rgba(0,0,0,0.15)";
+
+  const listaAlertas = result.alertas && result.alertas.length > 0
+    ? result.alertas.map(a => `<li><strong>${a.titulo}:</strong> ${a.descricao} <em>(${a.condutaSugerida})</em></li>`).join("")
+    : `<li>${result.resumoClinico || "Sinais premonitórios de urgência obstétrica identificados no texto da consulta."}</li>`;
+
+  alertaBox.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+        <span style="font-size: 1rem;">🚨</span>
+        <strong style="text-transform: uppercase;">Atenção Clínica Crítica (IA Gemini):</strong>
+      </div>
+      <ul style="margin: 0; padding-left: 20px;">
+        ${listaAlertas}
+      </ul>
+    `;
+
+  document.getElementById("esus-lens-ia-alert")?.remove();
+  targetBanner.appendChild(alertaBox);
+}
+
+/**
+ * 1) Mitigação de chamadas à LLM: verifica no IndexedDB se o `fingerprint` do prontuário mudou.
+ *    Se não mudou, reutiliza `ia_analise` instantaneamente sem consultar o Gemini.
+ * 2) Retroalimentação (Self-Feeding): se o prontuário mudou, envia a `ia_analise` anterior como memória evolutiva.
+ * 3) Isolamento de Paciente Ativo: se o médico trocar de paciente enquanto a LLM processa,
+ *    salva o resultado silenciosamente no IndexedDB do paciente original mas JAMAIS renderiza na tela do novo paciente.
+ */
 async function checkGeminiRedFlagsAsync(patient, bannerEl = null) {
   if (!patient) return;
-  const ev = patient.evolucao_pre_natal;
-  // Se não há texto no SOAP, não há o que o NLP analisar
-  if (!ev || (!ev.subjetivo && !ev.objetivo && !ev.avaliacao)) return;
 
-  const signature = `${patient.cpf || patient.id || ""}|${ev.subjetivo || ""}|${ev.objetivo || ""}|${ev.avaliacao || ""}|${ev.problema || ""}`;
-  if (signature === lastAnalyzedIaSignature && patient.ia_analise) {
-    renderSidebarIaBriefing(patient.ia_analise);
+  const patientKey = getPatientUniqueKey(patient);
+  const routeIdAtStart = getRouteEntityId(window.location.href);
+  currentActivePatientKey = patientKey;
+  currentActiveRouteId = routeIdAtStart;
+  const requestToken = ++currentIaRequestToken;
+
+  const ev = patient.evolucao_pre_natal;
+  // Se não há texto no SOAP, limpa eventual alerta antigo e não chama a LLM
+  if (!ev || (!ev.subjetivo && !ev.objetivo && !ev.avaliacao)) {
+    const container = document.getElementById("esus-lens-ia-briefing-container");
+    if (container) {
+      container.style.display = "none";
+      container.innerHTML = "";
+    }
+    document.getElementById("esus-lens-ia-alert")?.remove();
     return;
   }
-  lastAnalyzedIaSignature = signature;
+
+  const currentFingerprint = buildClinicalFingerprint(patient);
+  const idb = window.ESusIdb || globalThis.ESusIdb;
+  let storedPatient = null;
+  let previousIaAnalise = patient.ia_analise || null;
+
+  // 1. Consulta o IndexedDB para recuperar o `ia_analise` já existente deste paciente
+  if (patientKey && idb) {
+    try {
+      storedPatient = await idb.get_patient(patientKey);
+      if (storedPatient?.ia_analise) {
+        previousIaAnalise = storedPatient.ia_analise;
+      }
+    } catch (e) {
+      console.warn("[e-SUS Lens IA] Falha ao ler cache de ia_analise do IndexedDB:", e);
+    }
+  }
+
+  // Se durante a leitura do IDB o médico já mudou de paciente, aborta a renderização na UI
+  if (!isStillSameActivePatient(patientKey, routeIdAtStart, requestToken)) {
+    return;
+  }
+
+  // 2. CACHE HIT: Se o fingerprint salvo no IndexedDB é idêntico ao prontuário atual, NÃO chama a LLM!
+  if (previousIaAnalise && previousIaAnalise.fingerprint === currentFingerprint) {
+    console.log(`[e-SUS Lens IA] Prontuário inalterado para ${patientKey}. Reutilizando ia_analise do IndexedDB sem chamar a LLM.`);
+    patient.ia_analise = previousIaAnalise;
+    renderSidebarIaBriefing(previousIaAnalise, true);
+    renderCriticalAlertInBanner(previousIaAnalise, bannerEl);
+    return;
+  }
+
+  // Evita chamadas duplicadas concorrentes para o mesmo fingerprint
+  if (inFlightIaFingerprints.has(currentFingerprint)) {
+    return;
+  }
+  inFlightIaFingerprints.add(currentFingerprint);
+
+  // Exibe estado de carregamento no card da Sidebar apenas para o paciente atual
+  const container = document.getElementById("esus-lens-ia-briefing-container");
+  if (container) {
+    container.style.display = "block";
+    container.innerHTML = `
+      <div style="background: #F5F7FA; border-left: 4px solid #1351b4; padding: 10px 12px; border-radius: 6px; font-size: 0.78rem; color: #555;">
+        ⏳ <strong>Gerando Briefing Clínico IA...</strong> ${previousIaAnalise ? "(evoluindo análise anterior)" : ""}
+      </div>
+    `;
+  }
 
   try {
     const cs = patient.condicoes_saude || {};
@@ -1109,70 +1255,72 @@ async function checkGeminiRedFlagsAsync(patient, bannerEl = null) {
       objetivo: ev.objetivo || null,
       avaliacao: ev.avaliacao || null,
       problema: ev.problema || patient.cod_cipa || null,
+      // Retroalimentação: envia a análise anterior para o Gemini comparar a evolução temporal
+      analiseAnterior: previousIaAnalise
+        ? {
+            gerado_em: previousIaAnalise.gerado_em,
+            gravidade: previousIaAnalise.gravidade,
+            resumoClinico: previousIaAnalise.resumoClinico,
+            briefingLongitudinal: previousIaAnalise.briefingLongitudinal,
+          }
+        : null,
     };
 
     chrome.runtime.sendMessage({ type: "GEMINI_ANALISAR_RED_FLAGS", payload: soapPayload }, async (response) => {
+      inFlightIaFingerprints.delete(currentFingerprint);
       if (!response?.ok || !response.data) return;
+
+      // Constrói o histórico evolutivo acumulando os snapshots anteriores (máx últimos 5 ciclos)
+      const historicoAnterior = Array.isArray(previousIaAnalise?.historico_evolucao)
+        ? previousIaAnalise.historico_evolucao
+        : [];
+      const novoHistorico = previousIaAnalise
+        ? [
+            ...historicoAnterior.slice(-4),
+            {
+              gerado_em: previousIaAnalise.gerado_em,
+              gravidade: previousIaAnalise.gravidade,
+              resumoClinico: previousIaAnalise.resumoClinico,
+              briefingLongitudinal: previousIaAnalise.briefingLongitudinal,
+            },
+          ]
+        : [];
+
       const result = {
         ...response.data,
+        fingerprint: currentFingerprint,
         gerado_em: new Date().toISOString(),
+        historico_evolucao: novoHistorico,
       };
 
-      patient.ia_analise = result;
-
-      // 1. Renderiza o Briefing Longitudinal + Alertas na Sidebar
-      renderSidebarIaBriefing(result);
-
-      // 2. Salva o `ia_analise` no registro do paciente no IndexedDB e re-sincroniza com a API HIE
-      const key = patient.cpf || patient.id;
-      const idb = window.ESusIdb || globalThis.ESusIdb;
-      if (key && idb) {
+      // 1. SEMPRE salva o `ia_analise` no registro do paciente dono da requisição no IndexedDB (mesmo que o médico tenha saído da tela)
+      if (patientKey && idb) {
         try {
-          const stored = await idb.get_patient(key);
-          const updatedPatient = stored ? { ...stored, ...patient, ia_analise: result } : { ...patient, ia_analise: result };
-          await idb.save_patient(key, updatedPatient);
-          console.log("[e-SUS Lens IA] ia_analise gravado no IndexedDB e agendado para Sync HIE:", result);
+          const latestStored = await idb.get_patient(patientKey);
+          const updatedPatient = latestStored
+            ? { ...latestStored, ia_analise: result }
+            : { ...patient, ia_analise: result };
+          await idb.save_patient(patientKey, updatedPatient);
+          console.log(`[e-SUS Lens IA] ia_analise (Ciclo #${novoHistorico.length + 1}) salvo no IndexedDB para ${patientKey}.`);
           autoSyncPatientSilently(updatedPatient);
         } catch (idbErr) {
           console.warn("[e-SUS Lens IA] Erro ao persistir ia_analise no IndexedDB:", idbErr);
         }
       }
 
-      // 3. Se houver Alarme Crítico e houver banner na página do PEC, destaca em vermelho
-      const targetBanner = bannerEl || document.getElementById("esus-lens-pec-banner");
-      if (result.temAlarme && result.gravidade === "CRITICO" && targetBanner) {
-        console.warn("[e-SUS Lens IA] SINAL DE ALARME CRÍTICO DETECTADO PELO GEMINI:", result);
-
-        const alertaBox = document.createElement("div");
-        alertaBox.id = "esus-lens-ia-alert";
-        alertaBox.style.marginTop = "8px";
-        alertaBox.style.padding = "8px 12px";
-        alertaBox.style.backgroundColor = "#B71C1C";
-        alertaBox.style.color = "#FFFFFF";
-        alertaBox.style.borderRadius = "4px";
-        alertaBox.style.fontWeight = "500";
-        alertaBox.style.fontSize = "0.8rem";
-        alertaBox.style.boxShadow = "0 2px 4px rgba(0,0,0,0.15)";
-
-        const listaAlertas = result.alertas && result.alertas.length > 0
-          ? result.alertas.map(a => `<li><strong>${a.titulo}:</strong> ${a.descricao} <em>(${a.condutaSugerida})</em></li>`).join("")
-          : `<li>${result.resumoClinico || "Sinais premonitórios de urgência obstétrica identificados no texto da consulta."}</li>`;
-
-        alertaBox.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
-              <span style="font-size: 1rem;">🚨</span>
-              <strong style="text-transform: uppercase;">Atenção Clínica Crítica (IA Gemini):</strong>
-            </div>
-            <ul style="margin: 0; padding-left: 20px;">
-              ${listaAlertas}
-            </ul>
-          `;
-
-        document.getElementById("esus-lens-ia-alert")?.remove();
-        targetBanner.appendChild(alertaBox);
+      // 2. TRAVA ANTI-VAZAMENTO ENTRE PACIENTES:
+      // Só atualiza a UI se o médico AINDA estiver na tela deste mesmo paciente!
+      if (!isStillSameActivePatient(patientKey, routeIdAtStart, requestToken)) {
+        console.log(`[e-SUS Lens IA] Resposta da IA para ${patientKey} chegou após troca de paciente. Salva no banco, mas bloqueada na UI atual.`);
+        return;
       }
+
+      patient.ia_analise = result;
+      renderSidebarIaBriefing(result, false);
+      renderCriticalAlertInBanner(result, bannerEl);
     });
   } catch (e) {
+    inFlightIaFingerprints.delete(currentFingerprint);
     console.warn("[e-SUS Lens IA] Falha silenciosa ao checar sinais de alarme:", e);
   }
 }

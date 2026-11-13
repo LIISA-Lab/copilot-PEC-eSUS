@@ -27,12 +27,33 @@ const ESusIdb = {
                 const tx = db.transaction("patients", "readwrite");
                 const store = tx.objectStore("patients");
                 
-                store.put({ 
-                    key: key, 
-                    data: data, 
-                    updated_at: new Date().toISOString(),
-                    sync_status: "PENDENTE"
-                });
+                // Busca o registro existente para preservar `ia_analise` caso o Wasm salve a struct Patient sem esse campo
+                const getReq = store.get(key);
+                getReq.onsuccess = () => {
+                    const existingData = getReq.result?.data || {};
+                    const mergedData = {
+                        ...existingData,
+                        ...data,
+                        ia_analise: data.ia_analise !== undefined && data.ia_analise !== null
+                            ? data.ia_analise
+                            : (existingData.ia_analise || null),
+                    };
+
+                    store.put({ 
+                        key: key, 
+                        data: mergedData, 
+                        updated_at: new Date().toISOString(),
+                        sync_status: "PENDENTE"
+                    });
+                };
+                getReq.onerror = () => {
+                    store.put({ 
+                        key: key, 
+                        data: data, 
+                        updated_at: new Date().toISOString(),
+                        sync_status: "PENDENTE"
+                    });
+                };
                 
                 tx.oncomplete = () => resolve();
                 tx.onerror = () => reject(tx.error);

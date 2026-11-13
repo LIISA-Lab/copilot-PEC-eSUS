@@ -102,7 +102,14 @@ Subjetivo: ${soapContext.subjetivo || "Vazio"}
 Objetivo: ${soapContext.objetivo || "Vazio"}
 Avaliação: ${soapContext.avaliacao || "Vazio"}
 Problemas/Diagnósticos (CIAP/CID): ${soapContext.problema || "Nenhum"}
-
+${soapContext.analiseAnterior ? `
+Memória Clínica / Análise Anterior da IA (para retroalimentação e avaliação de evolução temporal):
+- Data da análise anterior: ${soapContext.analiseAnterior.gerado_em || "Não inf."}
+- Gravidade anterior: ${soapContext.analiseAnterior.gravidade || "NORMAL"}
+- Resumo/Perfil anterior: ${soapContext.analiseAnterior.resumoClinico || soapContext.analiseAnterior.briefingLongitudinal?.perfilSintetico || "Sem resumo prévio"}
+- Foco/Conduta anterior: ${soapContext.analiseAnterior.briefingLongitudinal?.focoConsultaHoje || soapContext.analiseAnterior.briefingLongitudinal?.condutaSugerida || "Nenhuma"}
+Instrução de Retroalimentação: Compare o quadro atual com a Análise Anterior acima. Destaque no "perfilSintetico" e no "resumoClinico" se houve melhora, estabilidade ou agravamento clínico em relação à avaliação prévia, e se as pendências anteriores foram atendidas.
+` : ""}
 Responda OBRIGATORIAMENTE em formato JSON com o seguinte schema:
 {
   "temAlarme": boolean,
