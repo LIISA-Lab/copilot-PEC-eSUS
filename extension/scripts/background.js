@@ -161,6 +161,90 @@ NÃO inclua markdown (como \`\`\`json) fora do objeto JSON. Devolva apenas o JSO
   }
 }
 
+/**
+ * Estrutura a transcrição de voz bruta da consulta médica (Scriba) nos 4 blocos do SOAP
+ * (Subjetivo, Objetivo, Avaliação, Plano) e sugere o código CIAP-2 para o e-SUS PEC.
+ */
+async function estruturarSoapComGemini(payload) {
+  const apiKey = getGeminiApiKey();
+  if (!apiKey) {
+    return { ok: false, error: "Chave GEMINI_API_KEY ausente. Defina no .env e rode `npm run config`." };
+  }
+
+  const transcricao = (payload?.transcricao || "").trim();
+  if (!transcricao) {
+    return { ok: false, error: "Transcrição vazia. Fale ou digite o relato da consulta antes de gerar o SOAP." };
+  }
+
+  const ctx = payload?.contextoPaciente || {};
+
+  const prompt = `
+Você é um Escriba Clínico Sênior (Ambient Clinical Scribe) especialista na Atenção Primária à Saúde (e-SUS PEC / Ministério da Saúde do Brasil).
+Sua tarefa é transformar a transcrição bruta de áudio de uma consulta médica em um registro clínico técnico, conciso e estruturado no método SOAP (Subjetivo, Objetivo, Avaliação e Plano), além de indicar o código CIAP-2 principal mais adequado.
+
+Regras Clínicas Obrigatórias:
+1. Ignore cumprimentos, conversas paralelas ou ruídos de reconhecimento de voz.
+2. Converta termos leigos ditos pelo paciente para terminologia médica semiológica (ex: "dor na boca do estômago" -> "epigastralgia"; "falta de ar" -> "dispneia"; "dor ao urinar" -> "disúria").
+3. NUNCA invente sinais vitais, exames físicos ou condutas que não tenham sido mencionados na transcrição. Se nenhum dado de exame físico foi dito, deixe "objetivo" resumido ao estado geral aparente ou vazio ("").
+4. Em "ciap2Sugerido", forneça o código e o nome oficial na tabela CIAP-2 do e-SUS PEC (ex: "W78" e "GRAVIDEZ", ou "K86" e "HIPERTENSÃO SEM COMPLICAÇÕES", ou "T90" e "DIABETES NÃO INSULINO-DEPENDENTE").
+
+Contexto Anônimo do Paciente na Tela:
+- Idade / Nascimento: ${ctx.idade || "Não informada"}
+- Sexo: ${ctx.sexo || "Não informado"}
+- Gestante: ${ctx.isPregnant ? "Sim" : "Não / Não confirmado"}
+- Idade Gestacional: ${ctx.idadeGestacional || "Não aplicável"}
+- Comorbidades Conhecidas: ${ctx.condicoesSaude || "Nenhuma registrada"}
+
+Transcrição Bruta da Consulta:
+"""
+${transcricao}
+"""
+
+Responda OBRIGATORIAMENTE em formato JSON puro seguindo este schema:
+{
+  "subjetivo": string,
+  "objetivo": string,
+  "avaliacao": string,
+  "plano": string,
+  "ciap2Sugerido": {
+    "codigo": string,
+    "termoBusca": string,
+    "descricao": string
+  }
+}
+NÃO inclua markdown (como \`\`\`json) fora do objeto JSON.
+  `.trim();
+
+  try {
+    const resp = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.15,
+          responseMimeType: "application/json",
+        },
+      }),
+    });
+
+    if (!resp.ok) {
+      const errText = await resp.text();
+      throw new Error(`Google Gemini API HTTP ${resp.status}: ${errText}`);
+    }
+
+    const data = await resp.json();
+    const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!candidateText) throw new Error("Resposta vazia da API do Gemini.");
+
+    const parsedJson = JSON.parse(candidateText);
+    return { ok: true, data: parsedJson };
+  } catch (err) {
+    console.error("[e-SUS Lens Scriba] Erro ao estruturar SOAP com Gemini:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
 const ACESSO_TIMEOUT_MS = 30000;
 
 function getAcessoConfig() {
@@ -282,6 +366,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === "GEMINI_ANALISAR_RED_FLAGS") {
     analisarRedFlagsComGemini(message.payload)
+      .then((result) => sendResponse(result))
+      .catch((err) => sendResponse({ ok: false, error: err.message }));
+    return true; // resposta assíncrona
+  }
+
+  if (message.type === "GEMINI_ESTRUTURAR_SOAP_SCRIBA") {
+    estruturarSoapComGemini(message.payload)
       .then((result) => sendResponse(result))
       .catch((err) => sendResponse({ ok: false, error: err.message }));
     return true; // resposta assíncrona

@@ -38,6 +38,7 @@
       "js": [
         "scripts/idb_helper.js",
         "scripts/acesso_saude.js",
+        "scripts/scriba.js",
         "scripts/content.js"
       ],
       "run_at": "document_idle"

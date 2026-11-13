@@ -1,5 +1,7 @@
 function showSidebar(data) {
   const existingSidebar = document.getElementById("esus-lens-sidebar");
+  // Preserva a aba ativa entre recriações da sidebar (ex.: médico usando o Scriba enquanto chegam novos dados)
+  const previousActiveTab = existingSidebar?.querySelector(".esus-tab.active")?.getAttribute("data-tab") || null;
   if (existingSidebar) {
     // Se já existe e os dados mudaram (ou foram atualizados), removemos a anterior para recriar com o novo paciente
     existingSidebar.remove();
@@ -81,8 +83,10 @@ function showSidebar(data) {
           <button class="esus-tab" data-tab="tab-socio">Sócio-Dem.</button>
           <button class="esus-tab" data-tab="tab-saude">Clínico</button>
           <button class="esus-tab" data-tab="tab-acesso-saude">Acesso Saúde CE</button>
+          <button class="esus-tab" data-tab="tab-scriba">🎙️ Scriba</button>
         ` : `
-          <button class="esus-tab active" data-tab="tab-acesso-saude" style="color: #1351b4; border-bottom: 3px solid #1351b4; background-color: #F8F9FA;">Acesso Saúde CE (Teleconsultoria)</button>
+          <button class="esus-tab active" data-tab="tab-acesso-saude">Acesso Saúde CE (Teleconsultoria)</button>
+          <button class="esus-tab" data-tab="tab-scriba">🎙️ Scriba</button>
         `}
     </div>
 
@@ -452,6 +456,11 @@ function showSidebar(data) {
     <div id="tab-acesso-saude" class="esus-tab-content ${isPregnant ? '' : 'active'}">
         ${AcessoSaude.tabHtml()}
     </div>
+
+    <!-- ABA 5: SCRIBA (Ambient Clinical Scribe) -->
+    <div id="tab-scriba" class="esus-tab-content">
+        ${Scriba.tabHtml()}
+    </div>
   `;
 
   document.body.appendChild(sidebar);
@@ -460,22 +469,29 @@ function showSidebar(data) {
   AcessoSaude.setPatient(data);
   AcessoSaude.init(sidebar);
 
+  // Aba Scriba: troca de paciente encerra a escuta e limpa o buffer; o estado sobrevive à recriação
+  Scriba.setPatient(data);
+  Scriba.init(sidebar);
+
   // Lógica das Abas (Tabs)
   const tabButtons = sidebar.querySelectorAll('.esus-tab');
   const tabContents = sidebar.querySelectorAll('.esus-tab-content');
 
-  tabButtons.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      // Remove active de todos
-      tabButtons.forEach(b => b.classList.remove('active'));
-      tabContents.forEach(c => c.classList.remove('active'));
+  const activateTab = (tabId) => {
+    const content = sidebar.querySelector('#' + tabId);
+    const button = sidebar.querySelector(`.esus-tab[data-tab="${tabId}"]`);
+    if (!content || !button) return;
+    tabButtons.forEach(b => b.classList.remove('active'));
+    tabContents.forEach(c => c.classList.remove('active'));
+    button.classList.add('active');
+    content.classList.add('active');
+  };
 
-      // Adiciona active no clicado
-      e.target.classList.add('active');
-      const tabId = e.target.getAttribute('data-tab');
-      sidebar.querySelector('#' + tabId).classList.add('active');
-    });
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => activateTab(e.currentTarget.getAttribute('data-tab')));
   });
+
+  if (previousActiveTab) activateTab(previousActiveTab);
 
   // Botão de Sincronização Manual do IndexedDB com a API HIE
   // const btnSyncHie = sidebar.querySelector("#esus-lens-btn-sync-hie");
