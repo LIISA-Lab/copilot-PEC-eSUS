@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "e-SUS PEC Lens (Risk Stratifier)",
+  "name": "e-SUS PEC Lens (AI First Edition)",
   "version": "0.5.0",
   "description": "Extensão Wasm para estratificação de risco de gestantes no e-SUS PEC.",
   "permissions": [

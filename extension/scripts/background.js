@@ -65,7 +65,9 @@ function getGeminiApiKey() {
 }
 
 /**
- * Analisa o relato clínico (SOAP) em busca de sinais de perigo obstétrico iminente (Red Flags).
+ * Analisa o relato clínico (SOAP + Condições de Saúde + Estratificação) para gerar:
+ * 1) Sinais de perigo iminente (Red Flags)
+ * 2) Briefing Longitudinal (Patient Digest 360º)
  * Dados identificadores (nome, CPF, endereço) NUNCA são passados para a IA.
  */
 async function analisarRedFlagsComGemini(soapContext) {
@@ -76,29 +78,40 @@ async function analisarRedFlagsComGemini(soapContext) {
   }
 
   const prompt = `
-Você é um auditor clínico e especialista em obstetrícia da Atenção Primária à Saúde (Ministério da Saúde do Brasil).
-Sua função é ler exclusivamente as anotações clínicas de um atendimento de pré-natal (SOAP) e identificar sinais de ALARME / URGÊNCIA OBSTÉTRICA IMINENTE (Red Flags).
+Você é um auditor clínico e especialista em Atenção Primária à Saúde e Obstetrícia (Ministério da Saúde do Brasil / SESA-CE).
+Sua função é ler os dados clínicos anônimos do paciente e as anotações do atendimento (SOAP) para produzir:
+1. Detecção de sinais de ALARME / URGÊNCIA CLÍNICA OU OBSTÉTRICA IMINENTE (Red Flags).
+2. Um Briefing Longitudinal Executivo (Patient Digest) de leitura rápida (10 segundos) para orientar o profissional de saúde.
 
 Lista de Sinais de Alarme Críticos a verificar:
 1. Picos pressóricos graves (Pressão Arterial PAS >= 140 mmHg ou PAD >= 90 mmHg).
-2. Sinais premonitórios de eclâmpsia (cefaleia intensa/refratária, escotomas/visão turva, epigastralgia ou dor em barra no hipocôndrio direito, hiperreflexia).
+2. Sinais premonitórios de eclâmpsia ou emergência hipertensiva (cefaleia intensa/refratária, escotomas/visão turva, epigastralgia ou dor em barra no hipocôndrio direito, hiperreflexia, dor torácica, dispneia).
 3. Sangramento vaginal em qualquer trimestre ou perda súbita de líquido amniótico.
-4. Febre materna alta associada a dor pélvica ou sintomas urinários graves.
+4. Febre alta associada a dor pélvica, sintomas urinários graves ou sinais de sepse.
 5. Ausência ou diminuição acentuada de movimentos fetais após 24 semanas.
-6. Altura uterina muito discrepante ou desaceleração/ausência de BCF.
+6. Altura uterina muito discrepante, desaceleração/ausência de BCF ou descompensação glicêmica aguda.
 
 Dados Clínicos Anônimos da Consulta:
-Idade Materna: ${soapContext.idade || "Não informada"}
-Idade Gestacional: ${soapContext.idadeGestacional || "Não informada"}
+Idade / Nascimento: ${soapContext.idade || "Não informada"}
+Sexo: ${soapContext.sexo || "Não informado"}
+Gestante: ${soapContext.isPregnant ? "Sim" : "Não / Não confirmado"}
+Idade Gestacional: ${soapContext.idadeGestacional || "Não aplicável / Não informada"}
+Estratificação de Risco Local: ${soapContext.rotuloRisco || "Não calculada"} (${soapContext.fatoresRisco || "Sem fatores listados"})
+Condições de Saúde (Cadastro Individual): ${soapContext.condicoesSaude || "Nenhuma informada"}
 Subjetivo: ${soapContext.subjetivo || "Vazio"}
 Objetivo: ${soapContext.objetivo || "Vazio"}
 Avaliação: ${soapContext.avaliacao || "Vazio"}
-Problemas/Diagnósticos: ${soapContext.problema || "Nenhum"}
+Problemas/Diagnósticos (CIAP/CID): ${soapContext.problema || "Nenhum"}
 
 Responda OBRIGATORIAMENTE em formato JSON com o seguinte schema:
 {
   "temAlarme": boolean,
   "gravidade": "CRITICO" | "MODERADO" | "NORMAL",
+  "briefingLongitudinal": {
+    "perfilSintetico": string,
+    "focoConsultaHoje": string,
+    "condutaSugerida": string
+  },
   "alertas": [
     {
       "titulo": string,

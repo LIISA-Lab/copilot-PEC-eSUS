@@ -100,6 +100,9 @@ function showSidebar(data) {
         </div>
         <div id="esus-lens-sync-feedback" style="display: none; margin-bottom: 12px; padding: 8px 12px; border-radius: 4px; font-size: 0.75rem;"></div>
 
+        <!-- Card de Briefing Longitudinal & Alertas IA (Gemini) -->
+        <div id="esus-lens-ia-briefing-container" style="display: none; margin-bottom: 12px;"></div>
+
         <details class="esus-accordion" open>
             <summary>Identificação Rápida</summary>
             <div class="acc-content">
@@ -907,6 +910,7 @@ function autoSyncPatientSilently(patientData) {
               objetivo: ev.objetivo || null,
               avaliacao: ev.avaliacao || null,
               problema: ev.problema || null,
+              ia_analise: p.ia_analise || null,
               data: ev.data_atendimento_epoch || Date.now(),
             }
           };
@@ -1024,33 +1028,121 @@ function embedPecGuidance(patient) {
 }
 
 /**
- * Envia apenas os dados clínicos semânticos para o Gemini avaliar sinais de perigo iminente.
- * Não bloqueia a tela; se encontrar perigo crítico, atualiza o banner visual imediatamente.
+ * Renderiza o Briefing Longitudinal + Red Flags na Sidebar (quando disponível)
  */
-async function checkGeminiRedFlagsAsync(patient, bannerEl) {
+function renderSidebarIaBriefing(iaAnalise) {
+  const container = document.getElementById("esus-lens-ia-briefing-container");
+  if (!container || !iaAnalise) return;
+
+  const isCritico = iaAnalise.temAlarme && iaAnalise.gravidade === "CRITICO";
+  const isModerado = iaAnalise.gravidade === "MODERADO";
+  const corBorda = isCritico ? "#B71C1C" : (isModerado ? "#FFA000" : "#1351b4");
+  const corFundo = isCritico ? "#FFEBEE" : (isModerado ? "#FFF8E1" : "#E3F2FD");
+  const corTitulo = isCritico ? "#B71C1C" : (isModerado ? "#E65100" : "#0D47A1");
+
+  const bf = iaAnalise.briefingLongitudinal || {};
+  const alertasHtml = Array.isArray(iaAnalise.alertas) && iaAnalise.alertas.length > 0
+    ? `<div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed rgba(0,0,0,0.15);">
+         <strong style="color: #B71C1C; font-size: 0.75rem;">🚨 Sinais de Alarme:</strong>
+         <ul style="margin: 4px 0 0 0; padding-left: 16px; font-size: 0.75rem; color: #333;">
+           ${iaAnalise.alertas.map(a => `<li><strong>${a.titulo}:</strong> ${a.descricao} <em>(${a.condutaSugerida})</em></li>`).join("")}
+         </ul>
+       </div>`
+    : "";
+
+  container.style.display = "block";
+  container.innerHTML = `
+    <div style="background: ${corFundo}; border-left: 4px solid ${corBorda}; padding: 10px 12px; border-radius: 6px; font-size: 0.78rem; color: #333; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <strong style="color: ${corTitulo}; font-size: 0.82rem;">🧠 Briefing Clínico IA (Gemini)</strong>
+        <span style="font-size: 0.68rem; font-weight: 700; padding: 2px 6px; border-radius: 10px; background: #fff; color: ${corTitulo};">${iaAnalise.gravidade || "NORMAL"}</span>
+      </div>
+      ${bf.perfilSintetico ? `<div style="margin-bottom: 4px;"><strong>Perfil:</strong> ${bf.perfilSintetico}</div>` : ""}
+      ${bf.focoConsultaHoje ? `<div style="margin-bottom: 4px;"><strong>Foco Hoje:</strong> ${bf.focoConsultaHoje}</div>` : ""}
+      ${bf.condutaSugerida ? `<div style="margin-bottom: 4px;"><strong>Conduta Sugerida:</strong> ${bf.condutaSugerida}</div>` : ""}
+      ${!bf.perfilSintetico && iaAnalise.resumoClinico ? `<div>${iaAnalise.resumoClinico}</div>` : ""}
+      ${alertasHtml}
+    </div>
+  `;
+}
+
+/**
+ * Envia apenas os dados clínicos semânticos para o Gemini avaliar sinais de perigo iminente
+ * e gerar o Briefing Longitudinal, salvando o resultado em `ia_analise` no IndexedDB para o HIE.
+ */
+let lastAnalyzedIaSignature = "";
+
+async function checkGeminiRedFlagsAsync(patient, bannerEl = null) {
   if (!patient) return;
   const ev = patient.evolucao_pre_natal;
   // Se não há texto no SOAP, não há o que o NLP analisar
   if (!ev || (!ev.subjetivo && !ev.objetivo && !ev.avaliacao)) return;
 
+  const signature = `${patient.cpf || patient.id || ""}|${ev.subjetivo || ""}|${ev.objetivo || ""}|${ev.avaliacao || ""}|${ev.problema || ""}`;
+  if (signature === lastAnalyzedIaSignature && patient.ia_analise) {
+    renderSidebarIaBriefing(patient.ia_analise);
+    return;
+  }
+  lastAnalyzedIaSignature = signature;
+
   try {
+    const cs = patient.condicoes_saude || {};
+    const condicoesAtivas = Object.entries(cs)
+      .filter(([_, v]) => v === true)
+      .map(([k]) => k.replace(/_/g, " "))
+      .join(", ");
+
+    const est = patient.estratificacao_risco || {};
+    const fatoresTexto = Array.isArray(est.fatores)
+      ? est.fatores.map(f => `${f.categoria}: ${f.descricao}`).join("; ")
+      : "";
+
     const soapPayload = {
       idade: patient.age || null,
+      sexo: patient.sex || null,
+      isPregnant: Boolean(patient.is_pregnant),
       idadeGestacional: patient.idade_gestacional_dias ? `${Math.floor(patient.idade_gestacional_dias / 7)} semanas` : null,
+      rotuloRisco: est.rotulo || null,
+      fatoresRisco: fatoresTexto || null,
+      condicoesSaude: condicoesAtivas || null,
       subjetivo: ev.subjetivo || null,
       objetivo: ev.objetivo || null,
       avaliacao: ev.avaliacao || null,
       problema: ev.problema || patient.cod_cipa || null,
     };
 
-    chrome.runtime.sendMessage({ type: "GEMINI_ANALISAR_RED_FLAGS", payload: soapPayload }, (response) => {
+    chrome.runtime.sendMessage({ type: "GEMINI_ANALISAR_RED_FLAGS", payload: soapPayload }, async (response) => {
       if (!response?.ok || !response.data) return;
-      const result = response.data;
+      const result = {
+        ...response.data,
+        gerado_em: new Date().toISOString(),
+      };
 
-      if (result.temAlarme && result.gravidade === "CRITICO") {
+      patient.ia_analise = result;
+
+      // 1. Renderiza o Briefing Longitudinal + Alertas na Sidebar
+      renderSidebarIaBriefing(result);
+
+      // 2. Salva o `ia_analise` no registro do paciente no IndexedDB e re-sincroniza com a API HIE
+      const key = patient.cpf || patient.id;
+      const idb = window.ESusIdb || globalThis.ESusIdb;
+      if (key && idb) {
+        try {
+          const stored = await idb.get_patient(key);
+          const updatedPatient = stored ? { ...stored, ...patient, ia_analise: result } : { ...patient, ia_analise: result };
+          await idb.save_patient(key, updatedPatient);
+          console.log("[e-SUS Lens IA] ia_analise gravado no IndexedDB e agendado para Sync HIE:", result);
+          autoSyncPatientSilently(updatedPatient);
+        } catch (idbErr) {
+          console.warn("[e-SUS Lens IA] Erro ao persistir ia_analise no IndexedDB:", idbErr);
+        }
+      }
+
+      // 3. Se houver Alarme Crítico e houver banner na página do PEC, destaca em vermelho
+      const targetBanner = bannerEl || document.getElementById("esus-lens-pec-banner");
+      if (result.temAlarme && result.gravidade === "CRITICO" && targetBanner) {
         console.warn("[e-SUS Lens IA] SINAL DE ALARME CRÍTICO DETECTADO PELO GEMINI:", result);
 
-        // Cria card de Alerta de Urgência no banner do PEC
         const alertaBox = document.createElement("div");
         alertaBox.id = "esus-lens-ia-alert";
         alertaBox.style.marginTop = "8px";
@@ -1076,9 +1168,8 @@ async function checkGeminiRedFlagsAsync(patient, bannerEl) {
             </ul>
           `;
 
-        // Remove alerta anterior se existir e insere no banner
         document.getElementById("esus-lens-ia-alert")?.remove();
-        bannerEl.appendChild(alertaBox);
+        targetBanner.appendChild(alertaBox);
       }
     });
   } catch (e) {
@@ -1188,6 +1279,9 @@ async function runWasmExtractor(isSilent = false) {
 
       // 4. Injeta a Sidebar Lateral do Painel
       showSidebar(patientData);
+
+      // 4.1. Dispara análise de Briefing Longitudinal + Red Flags no Gemini (mesmo quando não há h2 no DOM)
+      checkGeminiRedFlagsAsync(patientData, document.getElementById("esus-lens-pec-banner"));
 
       // 5. Envia os dados para o Background Script tentar gerar a notificação do SO
       chrome.runtime.sendMessage({
